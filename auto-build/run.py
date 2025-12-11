@@ -52,6 +52,7 @@ from agent import run_autonomous_agent
 from coordinator import SwarmCoordinator
 from progress import count_chunks, print_paused_banner
 from linear_updater import is_linear_enabled, LinearTaskState
+from linear_integration import LinearManager
 from graphiti_config import is_graphiti_enabled, get_graphiti_status
 from ui import (
     Icons,
