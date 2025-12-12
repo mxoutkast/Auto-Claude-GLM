@@ -1,0 +1,96 @@
+{
+  "feature": "New Multi Providers",
+  "workflow_type": "refactor",
+  "services_involved": [],
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Add New System",
+      "type": "implementation",
+      "chunks": [
+        {
+          "id": "add-new-implementation",
+          "description": "Implement new system alongside existing",
+          "status": "completed",
+          "notes": "Multi-provider system already implemented in spec 002. Added comprehensive unit tests for multi-provider configuration (36 tests covering OpenAI, Anthropic, Azure OpenAI, Ollama, Voyage AI providers)",
+          "verification": {
+            "type": "command",
+            "run": "pytest tests/test_graphiti.py -v"
+          }
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Migrate Consumers",
+      "type": "implementation",
+      "chunks": [
+        {
+          "id": "migrate-to-new",
+          "description": "Update consumers to use new system",
+          "status": "pending",
+          "verification": {
+            "type": "browser",
+            "scenario": "All functionality works with new system"
+          }
+        }
+      ],
+      "depends_on": [
+        1
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Remove Old System",
+      "type": "cleanup",
+      "chunks": [
+        {
+          "id": "remove-old",
+          "description": "Remove old system code",
+          "status": "pending",
+          "verification": {
+            "type": "command",
+            "run": "echo 'Old system removed - verify no references remain'"
+          }
+        }
+      ],
+      "depends_on": [
+        2
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Polish",
+      "type": "cleanup",
+      "chunks": [
+        {
+          "id": "cleanup",
+          "description": "Final cleanup and documentation",
+          "status": "pending"
+        },
+        {
+          "id": "verify-complete",
+          "description": "Verify refactor is complete",
+          "status": "pending",
+          "verification": {
+            "type": "browser",
+            "scenario": "All functionality works, no regressions"
+          }
+        }
+      ],
+      "depends_on": [
+        3
+      ]
+    }
+  ],
+  "final_acceptance": [
+    "All functionality migrated to new system",
+    "Old system completely removed",
+    "No regressions in existing features"
+  ],
+  "created_at": "2025-12-12T14:59:33.824092",
+  "updated_at": "2025-12-12T14:59:33.824092",
+  "spec_file": "/Users/andremikalsen/Documents/Coding/autonomous-coding/.auto-claude/specs/006-new-multi-providers/spec.md",
+  "status": "backlog",
+  "planStatus": "pending"
+}
