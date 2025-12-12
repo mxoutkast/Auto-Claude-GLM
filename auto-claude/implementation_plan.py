@@ -462,6 +462,65 @@ class ImplementationPlan:
 
         return "\n".join(lines)
 
+    def add_followup_phase(
+        self,
+        name: str,
+        chunks: list[Chunk],
+        phase_type: PhaseType = PhaseType.IMPLEMENTATION,
+        parallel_safe: bool = False,
+    ) -> Phase:
+        """
+        Add a new follow-up phase to an existing (typically completed) plan.
+
+        This allows users to extend completed builds with additional work.
+        The new phase depends on all existing phases to ensure proper sequencing.
+
+        Args:
+            name: Name of the follow-up phase (e.g., "Follow-Up: Add validation")
+            chunks: List of Chunk objects to include in the phase
+            phase_type: Type of the phase (default: implementation)
+            parallel_safe: Whether chunks in this phase can run in parallel
+
+        Returns:
+            The newly created Phase object
+
+        Example:
+            >>> plan = ImplementationPlan.load(plan_path)
+            >>> new_chunks = [Chunk(id="followup-1", description="Add error handling")]
+            >>> plan.add_followup_phase("Follow-Up: Error Handling", new_chunks)
+            >>> plan.save(plan_path)
+        """
+        # Calculate the next phase number
+        if self.phases:
+            next_phase_num = max(p.phase for p in self.phases) + 1
+            # New phase depends on all existing phases
+            depends_on = [p.phase for p in self.phases]
+        else:
+            next_phase_num = 1
+            depends_on = []
+
+        # Create the new phase
+        new_phase = Phase(
+            phase=next_phase_num,
+            name=name,
+            type=phase_type,
+            chunks=chunks,
+            depends_on=depends_on,
+            parallel_safe=parallel_safe,
+        )
+
+        # Append to phases list
+        self.phases.append(new_phase)
+
+        # Update status to in_progress since we now have pending work
+        self.status = "in_progress"
+        self.planStatus = "in_progress"
+
+        # Clear QA signoff since the plan has changed
+        self.qa_signoff = None
+
+        return new_phase
+
 
 def create_feature_plan(
     feature: str,
