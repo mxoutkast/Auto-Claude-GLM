@@ -14,7 +14,13 @@ Thank you for your interest in contributing to Auto Claude! This document provid
 - [Testing](#testing)
 - [Continuous Integration](#continuous-integration)
 - [Git Workflow](#git-workflow)
+  - [Branch Overview](#branch-overview)
+  - [Main Branches](#main-branches)
+  - [Supporting Branches](#supporting-branches)
   - [Branch Naming](#branch-naming)
+  - [Where to Branch From](#where-to-branch-from)
+  - [Pull Request Targets](#pull-request-targets)
+  - [Release Process](#release-process-maintainers)
   - [Commit Messages](#commit-messages)
 - [Pull Request Process](#pull-request-process)
 - [Issue Reporting](#issue-reporting)
@@ -333,6 +339,37 @@ pnpm typecheck
 
 ## Git Workflow
 
+We use a **Git Flow** branching strategy to manage releases and parallel development.
+
+### Branch Overview
+
+```
+main (stable)          ← Only released, tested code (tagged versions)
+  │
+develop                ← Integration branch - all PRs merge here first
+  │
+├── feature/xxx        ← New features
+├── fix/xxx            ← Bug fixes
+├── release/vX.Y.Z     ← Release preparation
+└── hotfix/xxx         ← Emergency production fixes
+```
+
+### Main Branches
+
+| Branch | Purpose | Protected |
+|--------|---------|-----------|
+| `main` | Production-ready code. Only receives merges from `release/*` or `hotfix/*` branches. Every merge is tagged (v2.7.0, v2.8.0, etc.) | ✅ Yes |
+| `develop` | Integration branch where all features and fixes are combined. This is the default target for all PRs. | ✅ Yes |
+
+### Supporting Branches
+
+| Branch Type | Branch From | Merge To | Purpose |
+|-------------|-------------|----------|---------|
+| `feature/*` | `develop` | `develop` | New features and enhancements |
+| `fix/*` | `develop` | `develop` | Bug fixes (non-critical) |
+| `release/*` | `develop` | `main` + `develop` | Release preparation and final testing |
+| `hotfix/*` | `main` | `main` + `develop` | Critical production bug fixes |
+
 ### Branch Naming
 
 Use descriptive branch names with a prefix indicating the type of change:
@@ -345,6 +382,66 @@ Use descriptive branch names with a prefix indicating the type of change:
 | `refactor/` | Code refactoring | `refactor/simplify-auth-flow` |
 | `test/` | Test additions/fixes | `test/add-integration-tests` |
 | `chore/` | Maintenance tasks | `chore/update-dependencies` |
+| `release/` | Release preparation | `release/v2.8.0` |
+| `hotfix/` | Emergency fixes | `hotfix/critical-auth-bug` |
+
+### Where to Branch From
+
+```bash
+# For features and bug fixes - ALWAYS branch from develop
+git checkout develop
+git pull origin develop
+git checkout -b feature/my-new-feature
+
+# For hotfixes only - branch from main
+git checkout main
+git pull origin main
+git checkout -b hotfix/critical-fix
+```
+
+### Pull Request Targets
+
+> ⚠️ **Important:** All PRs should target `develop`, NOT `main`!
+
+| Your Branch Type | Target Branch |
+|------------------|---------------|
+| `feature/*` | `develop` |
+| `fix/*` | `develop` |
+| `docs/*` | `develop` |
+| `refactor/*` | `develop` |
+| `test/*` | `develop` |
+| `chore/*` | `develop` |
+| `hotfix/*` | `main` (maintainers only) |
+| `release/*` | `main` (maintainers only) |
+
+### Release Process (Maintainers)
+
+When ready to release a new version:
+
+```bash
+# 1. Create release branch from develop
+git checkout develop
+git pull origin develop
+git checkout -b release/v2.8.0
+
+# 2. Update version numbers, CHANGELOG, final fixes only
+# No new features allowed in release branches!
+
+# 3. Merge to main and tag
+git checkout main
+git merge release/v2.8.0
+git tag v2.8.0
+git push origin main --tags
+
+# 4. Merge back to develop (important!)
+git checkout develop
+git merge release/v2.8.0
+git push origin develop
+
+# 5. Delete release branch
+git branch -d release/v2.8.0
+git push origin --delete release/v2.8.0
+```
 
 ### Commit Messages
 
@@ -378,7 +475,13 @@ git commit -m "WIP"
 
 ## Pull Request Process
 
-1. **Fork the repository** and create your branch from `main`
+1. **Fork the repository** and create your branch from `develop` (not main!)
+
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git checkout -b feature/your-feature-name
+   ```
 
 2. **Make your changes** following the code style guidelines
 
