@@ -394,6 +394,11 @@ export interface WorktreeMergeResult {
       hasChanges: boolean;
       files: string[];
       count: number;
+      // Track staged vs unstaged separately
+      stagedFiles?: string[];  // Files already staged (by AI merge) - not a blocker
+      unstagedFiles?: string[];  // Unstaged/untracked files - these ARE blockers
+      stagedCount?: number;
+      unstagedCount?: number;
     } | null;
   };
 }

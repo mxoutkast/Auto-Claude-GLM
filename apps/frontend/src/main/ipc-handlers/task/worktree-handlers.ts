@@ -1487,8 +1487,8 @@ export function registerWorktreeHandlers(
               // Check if merge might have succeeded before the hang
               // Look for success indicators in the output
               const mayHaveSucceeded = stdout.includes('staged') ||
-                                       stdout.includes('Successfully merged') ||
-                                       stdout.includes('Changes from');
+                stdout.includes('Successfully merged') ||
+                stdout.includes('Changes from');
 
               if (mayHaveSucceeded) {
                 debug('TIMEOUT: Process hung but merge may have succeeded based on output');
@@ -1802,8 +1802,13 @@ export function registerWorktreeHandlers(
         console.warn('[IPC] Found task:', task.specId, 'project:', project.name);
 
         // Check for uncommitted changes in the main project
+        // Distinguish between:
+        // - Staged files (AI-merged, ready to commit) - NOT a blocker
+        // - Unstaged/untracked files (user's uncommitted work) - blockers
         let hasUncommittedChanges = false;
         let uncommittedFiles: string[] = [];
+        let stagedFiles: string[] = [];
+        let unstagedFiles: string[] = [];
         try {
           const gitStatus = execFileSync(getToolPath('git'), ['status', '--porcelain'], {
             cwd: project.path,
@@ -1811,14 +1816,39 @@ export function registerWorktreeHandlers(
           });
 
           if (gitStatus && gitStatus.trim()) {
-            // Parse the status output to get file names
-            // Format: XY filename (where X and Y are status chars, then space, then filename)
-            uncommittedFiles = gitStatus
-              .split('\n')
-              .filter(line => line.trim())
-              .map(line => line.substring(3).trim()); // Skip 2 status chars + 1 space, trim any trailing whitespace
+            // Parse the status output
+            // Format: XY filename
+            // X = staging area status, Y = worktree status
+            // Staged files: X is not ' ' or '?' (file is in index)
+            // Unstaged files: Y is not ' ' (file has changes in worktree)
+            // Untracked files: XY = '??' (new files not added to git)
+            const lines = gitStatus.split('\n').filter(line => line.trim());
 
-            hasUncommittedChanges = uncommittedFiles.length > 0;
+            for (const line of lines) {
+              const indexStatus = line[0];  // Staging area status
+              const worktreeStatus = line[1];  // Worktree status
+              const filename = line.substring(3).trim();
+
+              uncommittedFiles.push(filename);
+
+              // File is staged if it has a status in the index (not ' ' or '?')
+              const isStaged = indexStatus !== ' ' && indexStatus !== '?';
+              // File has unstaged changes if it has a status in worktree (not ' ')
+              // or if it's untracked (??)
+              const hasUnstagedChanges = worktreeStatus !== ' ' || indexStatus === '?';
+
+              if (isStaged && !hasUnstagedChanges) {
+                // Purely staged file (AI merged, ready to commit)
+                stagedFiles.push(filename);
+              } else {
+                // Has unstaged changes or is untracked - this blocks merge
+                unstagedFiles.push(filename);
+              }
+            }
+
+            // Only set hasUncommittedChanges if there are UNSTAGED files
+            // Staged files are fine - they're ready to commit
+            hasUncommittedChanges = unstagedFiles.length > 0;
           }
         } catch (e) {
           console.error('[IPC] Failed to check git status:', e);
@@ -1902,10 +1932,15 @@ export function registerWorktreeHandlers(
                       },
                       gitConflicts: result.gitConflicts || null,
                       // Include uncommitted changes info for the frontend
-                      uncommittedChanges: hasUncommittedChanges ? {
-                        hasChanges: true,
+                      // Only show as blocker if there are unstaged files
+                      uncommittedChanges: (unstagedFiles.length > 0 || stagedFiles.length > 0) ? {
+                        hasChanges: unstagedFiles.length > 0,  // Only true if there are unstaged files
                         files: uncommittedFiles,
-                        count: uncommittedFiles.length
+                        count: uncommittedFiles.length,
+                        stagedFiles: stagedFiles,
+                        unstagedFiles: unstagedFiles,
+                        stagedCount: stagedFiles.length,
+                        unstagedCount: unstagedFiles.length
                       } : null
                     }
                   }

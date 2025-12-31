@@ -24,7 +24,7 @@ interface WorkspaceStatusProps {
   worktreeStatus: WorktreeStatus;
   workspaceError: string | null;
   stageOnly: boolean;
-  mergePreview: { files: string[]; conflicts: MergeConflict[]; summary: MergeStats; gitConflicts?: GitConflictInfo; uncommittedChanges?: { hasChanges: boolean; files: string[]; count: number } | null } | null;
+  mergePreview: { files: string[]; conflicts: MergeConflict[]; summary: MergeStats; gitConflicts?: GitConflictInfo; uncommittedChanges?: { hasChanges: boolean; files: string[]; count: number; stagedFiles?: string[]; unstagedFiles?: string[]; stagedCount?: number; unstagedCount?: number } | null } | null;
   isLoadingPreview: boolean;
   isMerging: boolean;
   isDiscarding: boolean;
@@ -127,6 +127,9 @@ export function WorkspaceStatus({
   const hasGitConflicts = mergePreview?.gitConflicts?.hasConflicts;
   const hasUncommittedChanges = mergePreview?.uncommittedChanges?.hasChanges;
   const uncommittedCount = mergePreview?.uncommittedChanges?.count || 0;
+  const unstagedCount = mergePreview?.uncommittedChanges?.unstagedCount || 0;
+  const stagedCount = mergePreview?.uncommittedChanges?.stagedCount || 0;
+  const hasStagedFiles = stagedCount > 0;
   const hasAIConflicts = mergePreview && mergePreview.conflicts.length > 0;
 
   // Check if branch needs rebase (main has advanced since spec was created)
@@ -236,16 +239,31 @@ export function WorkspaceStatus({
           </div>
         )}
 
-        {/* Uncommitted Changes Warning */}
+        {/* Unstaged Changes Warning - only for files NOT yet staged (blockers) */}
         {hasUncommittedChanges && (
           <div className="flex items-start gap-2 p-2.5 rounded-lg bg-warning/10 border border-warning/20">
             <AlertTriangle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-warning">
-                {uncommittedCount} uncommitted {uncommittedCount === 1 ? 'change' : 'changes'} in main project
+                {unstagedCount} unstaged {unstagedCount === 1 ? 'change' : 'changes'} in main project
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Commit or stash them in your terminal before staging to avoid conflicts.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Staged Files Info - show when there are staged files ready to commit */}
+        {!hasUncommittedChanges && hasStagedFiles && (
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-success/10 border border-success/20">
+            <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-success">
+                {stagedCount} {stagedCount === 1 ? 'file' : 'files'} staged, ready to commit
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Review the staged changes and commit when ready.
               </p>
             </div>
           </div>

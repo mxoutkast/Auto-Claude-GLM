@@ -1301,9 +1301,10 @@ def _build_merge_prompt(
 
     base_section = ""
     if base_content:
-        # Truncate very large files
-        if len(base_content) > 10000:
-            base_content = base_content[:10000] + "\n... (truncated)"
+        # FIX: Increased truncation limits to preserve more context for intelligent merging
+        # Old limits (10k/15k) were too low for complex files
+        if len(base_content) > 50000:
+            base_content = base_content[:50000] + "\n... (truncated)"
         base_section = f"""
 BASE (common ancestor):
 ```{language}
@@ -1311,11 +1312,12 @@ BASE (common ancestor):
 ```
 """
 
-    # Truncate large content
-    if len(main_content) > 15000:
-        main_content = main_content[:15000] + "\n... (truncated)"
-    if len(worktree_content) > 15000:
-        worktree_content = worktree_content[:15000] + "\n... (truncated)"
+    # FIX: Increased truncation limits to preserve more context for intelligent merging
+    # Old limits (10k/15k) were too low for complex files
+    if len(main_content) > 50000:
+        main_content = main_content[:50000] + "\n... (truncated)"
+    if len(worktree_content) > 50000:
+        worktree_content = worktree_content[:50000] + "\n... (truncated)"
 
     prompt = f"""Perform a 3-way merge for file: {file_path}
 Task being merged: {spec_name}
@@ -1387,6 +1389,11 @@ async def _merge_file_with_ai_async(
             from core.auth import ensure_claude_code_oauth_token, get_auth_token
 
             if not get_auth_token():
+                debug_error(
+                    MODULE,
+                    "AUTHENTICATION FAILED - No token available for AI merge",
+                    file_path=task.file_path,
+                )
                 return ParallelMergeResult(
                     file_path=task.file_path,
                     merged_content=None,
@@ -1408,7 +1415,13 @@ async def _merge_file_with_ai_async(
             # Call Claude Haiku for fast merge
             try:
                 from core.simple_client import create_simple_client
-            except ImportError:
+            except ImportError as e:
+                debug_error(
+                    MODULE,
+                    "IMPORT FAILED - core.simple_client not available",
+                    error=str(e),
+                    file_path=task.file_path,
+                )
                 return ParallelMergeResult(
                     file_path=task.file_path,
                     merged_content=None,
@@ -1416,27 +1429,110 @@ async def _merge_file_with_ai_async(
                     error="core.simple_client not available",
                 )
 
-            client = create_simple_client(
+            # DIAGNOSTIC: Log client creation attempt
+            debug(
+                MODULE,
+                "AI CLIENT CREATION",
+                file_path=task.file_path,
                 agent_type="merge_resolver",
-                model="glm-4",
-                system_prompt=AI_MERGE_SYSTEM_PROMPT,
-                max_thinking_tokens=1024,  # Low thinking for speed
+                model="glm-4.7",  # FIX: Use more capable model for complex merges
+                max_thinking_tokens=8192,  # FIX: Increase thinking budget for better merge quality
+                system_prompt_length=len(AI_MERGE_SYSTEM_PROMPT),
+                prompt_length=len(prompt),
+                estimated_tokens=round(len(prompt) / 3),
             )
+             
+            try:
+                client = create_simple_client(
+                    agent_type="merge_resolver",
+                    model="glm-4.7",
+                    system_prompt=AI_MERGE_SYSTEM_PROMPT,
+                    max_thinking_tokens=8192,
+                )
+                debug_success(
+                    MODULE,
+                    "AI CLIENT CREATED SUCCESSFULLY",
+                    file_path=task.file_path,
+                )
+            except Exception as e:
+                debug_error(
+                    MODULE,
+                    "AI CLIENT CREATION FAILED",
+                    file_path=task.file_path,
+                    error=str(e),
+                    error_type=type(e).__name__,
+                )
+                return ParallelMergeResult(
+                    file_path=task.file_path,
+                    merged_content=None,
+                    success=False,
+                    error=f"Failed to create AI client: {str(e)}",
+                )
 
             response_text = ""
+            response_messages = []
+            
             async with client:
+                # DIAGNOSTIC: Log AI query start
+                debug(
+                    MODULE,
+                    "AI QUERY START",
+                    file_path=task.file_path,
+                    prompt_length=len(prompt),
+                    estimated_tokens=round(len(prompt) / 3),
+                )
                 await client.query(prompt)
 
+                # DIAGNOSTIC: Log message stream
+                message_count = 0
                 async for msg in client.receive_response():
                     msg_type = type(msg).__name__
+                    response_messages.append(msg_type)
+                    message_count += 1
                     if msg_type == "AssistantMessage" and hasattr(msg, "content"):
                         for block in msg.content:
                             if hasattr(block, "text"):
                                 response_text += block.text
+                                debug_verbose(
+                                    MODULE,
+                                    f"Received AssistantMessage block with text",
+                                    file_path=task.file_path,
+                                    block_type=type(block).__name__,
+                                    text_preview=block.text[:100] if hasattr(block, "text") else "NO TEXT",
+                                )
+
+                # DIAGNOSTIC: Log AI query completion
+                debug(
+                    MODULE,
+                    "AI QUERY COMPLETE",
+                    file_path=task.file_path,
+                    messages_received=message_count,
+                    response_messages_received=response_messages,
+                )
+
+            # DIAGNOSTIC: Log response details
+            debug(
+                MODULE,
+                "AI RESPONSE ANALYSIS",
+                file_path=task.file_path,
+                response_messages_received=response_messages,
+                response_length=len(response_text),
+                response_preview=response_text[:200] if response_text else "EMPTY",
+            )
 
             if response_text:
                 # Strip any code fences the model might have added
                 merged_content = _strip_code_fences(response_text.strip())
+
+                # DIAGNOSTIC: Log merged content details
+                debug(
+                    MODULE,
+                    "AI MERGED CONTENT RECEIVED",
+                    file_path=task.file_path,
+                    merged_content_length=len(merged_content),
+                    merged_content_preview=merged_content[:300] if merged_content else "EMPTY",
+                    first_line=merged_content.split("\n")[0][:100] if merged_content else "",
+                )
 
                 # VALIDATION: Check if AI returned natural language instead of code
                 # This catches cases where AI says "I need to see more..." instead of merging
@@ -1451,10 +1547,14 @@ async def _merge_file_with_ai_async(
                     "I apologize",
                 ]
                 first_line = merged_content.split("\n")[0] if merged_content else ""
+                
+                # DIAGNOSTIC: Log natural language detection
                 if any(pattern in first_line for pattern in natural_language_patterns):
                     debug_warning(
                         MODULE,
-                        f"AI returned natural language instead of code for {task.file_path}: {first_line[:100]}",
+                        f"NATURAL LANGUAGE DETECTED for {task.file_path}",
+                        first_line=first_line[:100],
+                        full_response_preview=merged_content[:500] if merged_content else "EMPTY",
                     )
                     return ParallelMergeResult(
                         file_path=task.file_path,
@@ -1467,10 +1567,15 @@ async def _merge_file_with_ai_async(
                 is_valid, syntax_error = _validate_merged_syntax(
                     task.file_path, merged_content, task.project_dir
                 )
+                
+                # DIAGNOSTIC: Log syntax validation results
                 if not is_valid:
                     debug_warning(
                         MODULE,
-                        f"AI merge produced invalid syntax for {task.file_path}: {syntax_error}",
+                        f"SYNTAX VALIDATION FAILED for {task.file_path}",
+                        syntax_error=syntax_error,
+                        merged_content_preview=merged_content[:500] if merged_content else "EMPTY",
+                        content_length=len(merged_content) if merged_content else 0,
                     )
                     return ParallelMergeResult(
                         file_path=task.file_path,
@@ -1479,7 +1584,14 @@ async def _merge_file_with_ai_async(
                         error=f"AI merge produced invalid syntax: {syntax_error}",
                     )
 
-                debug(MODULE, f"AI merged {task.file_path} successfully")
+                # DIAGNOSTIC: Log successful merge with content details
+                debug_success(
+                    MODULE,
+                    f"AI MERGE SUCCESS - Content validated and ready to write",
+                    file_path=task.file_path,
+                    merged_length=len(merged_content),
+                    merged_content_lines=merged_content.count("\n") if merged_content else 0,
+                )
                 return ParallelMergeResult(
                     file_path=task.file_path,
                     merged_content=merged_content,
@@ -1487,6 +1599,11 @@ async def _merge_file_with_ai_async(
                     was_auto_merged=False,
                 )
             else:
+                debug_error(
+                    MODULE,
+                    f"AI RETURNED EMPTY RESPONSE for {task.file_path}",
+                    prompt_length=len(prompt),
+                )
                 return ParallelMergeResult(
                     file_path=task.file_path,
                     merged_content=None,

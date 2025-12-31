@@ -27,7 +27,7 @@ interface TaskReviewProps {
   stagedSuccess: string | null;
   stagedProjectPath: string | undefined;
   suggestedCommitMessage: string | undefined;
-  mergePreview: { files: string[]; conflicts: MergeConflict[]; summary: MergeStats; gitConflicts?: GitConflictInfo; uncommittedChanges?: { hasChanges: boolean; files: string[]; count: number } | null } | null;
+  mergePreview: { files: string[]; conflicts: MergeConflict[]; summary: MergeStats; gitConflicts?: GitConflictInfo; uncommittedChanges?: { hasChanges: boolean; files: string[]; count: number; stagedFiles?: string[]; unstagedFiles?: string[]; stagedCount?: number; unstagedCount?: number } | null } | null;
   isLoadingPreview: boolean;
   showConflictDialog: boolean;
   onFeedbackChange: (value: string) => void;
