@@ -5,6 +5,7 @@ GLM Agent Options Configuration
 Configuration options for GLM Agent Client that mirrors ClaudeAgentOptions interface.
 """
 
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -30,7 +31,7 @@ class GLMAgentOptions:
         output_format: Structured output format for JSON responses
     """
     
-    model: str = "glm-4.7"
+    model: str = os.environ.get("GLM_MODEL", "glm-4.7")
     system_prompt: str | None = None
     allowed_tools: list[str] = field(default_factory=list)
     mcp_servers: dict = field(default_factory=dict)
@@ -49,7 +50,8 @@ class GLMAgentOptions:
         Returns:
             GLM model identifier
         """
-        return self.model
+        # Check environment variable first, then use instance value
+        return os.environ.get("GLM_MODEL", self.model)
     
     def get_temperature(self) -> float:
         """

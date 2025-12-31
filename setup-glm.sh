@@ -9,7 +9,7 @@ echo "========================================"
 echo ""
 
 # Check if .env exists
-ENV_FILE="apps/backend/.env"
+ENV_FILE=".env"
 if [ ! -f "$ENV_FILE" ]; then
     echo "Creating .env file..."
     touch "$ENV_FILE"

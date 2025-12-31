@@ -43,11 +43,11 @@ from pathlib import Path
 auto_claude_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(auto_claude_dir))
 
-# Load .env file
+# Load .env file from project root
 try:
     from dotenv import load_dotenv
 
-    env_file = auto_claude_dir / ".env"
+    env_file = auto_claude_dir.parent / ".env"
     if env_file.exists():
         load_dotenv(env_file)
         print(f"Loaded .env from {env_file}")

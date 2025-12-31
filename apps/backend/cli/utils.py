@@ -43,9 +43,9 @@ def setup_environment() -> Path:
     script_dir = Path(__file__).parent.parent.resolve()
     sys.path.insert(0, str(script_dir))
 
-    # Load .env file - check both auto-claude/ and dev/auto-claude/ locations
-    env_file = script_dir / ".env"
-    dev_env_file = script_dir.parent / "dev" / "auto-claude" / ".env"
+    # Load .env file from project root - check both project root and dev/auto-claude/ locations
+    env_file = script_dir.parent / ".env"
+    dev_env_file = script_dir.parent.parent / "dev" / "auto-claude" / ".env"
     if env_file.exists():
         load_dotenv(env_file)
     elif dev_env_file.exists():

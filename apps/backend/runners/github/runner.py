@@ -56,10 +56,10 @@ if sys.platform == "win32":
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-# Load .env file
+# Load .env file from project root
 from dotenv import load_dotenv
 
-env_file = Path(__file__).parent.parent.parent / ".env"
+env_file = Path(__file__).parent.parent.parent.parent / ".env"
 if env_file.exists():
     load_dotenv(env_file)
 
