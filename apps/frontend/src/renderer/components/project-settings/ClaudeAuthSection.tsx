@@ -37,7 +37,7 @@ export function ClaudeAuthSection({
 
   return (
     <CollapsibleSection
-      title="Claude Authentication"
+      title="AI Authentication"
       icon={<Key className="h-4 w-4" />}
       isExpanded={isExpanded}
       onToggle={onToggle}
@@ -50,15 +50,15 @@ export function ClaudeAuthSection({
         </div>
       ) : envConfig ? (
         <>
-          {/* Claude CLI Status */}
+          {/* API Status */}
           <div className="rounded-lg border border-border bg-muted/30 p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-foreground">Claude CLI</p>
+                <p className="text-sm font-medium text-foreground">GLM API</p>
                 <p className="text-xs text-muted-foreground">
                   {isCheckingAuth ? 'Checking...' :
-                    authStatus === 'authenticated' ? 'Authenticated via OAuth' :
-                    authStatus === 'not_authenticated' ? 'Not authenticated' :
+                    authStatus === 'authenticated' ? 'API Key Configured' :
+                    authStatus === 'not_authenticated' ? 'Not configured' :
                     'Status unknown'}
                 </p>
               </div>
@@ -73,33 +73,33 @@ export function ClaudeAuthSection({
                 ) : (
                   <>
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    {authStatus === 'authenticated' ? 'Re-authenticate' : 'Setup OAuth'}
+                    {authStatus === 'authenticated' ? 'Reconfigure' : 'Setup API Key'}
                   </>
                 )}
               </Button>
             </div>
           </div>
 
-          {/* Manual OAuth Token */}
+          {/* API Key */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium text-foreground">
-                OAuth Token {envConfig.claudeTokenIsGlobal ? '(Override)' : ''}
+                API Key {envConfig.claudeTokenIsGlobal ? '(Override)' : ''}
               </Label>
               {envConfig.claudeTokenIsGlobal && (
                 <span className="flex items-center gap-1 text-xs text-info">
                   <Globe className="h-3 w-3" />
-                  Using global token
+                  Using global key
                 </span>
               )}
             </div>
             {envConfig.claudeTokenIsGlobal ? (
               <p className="text-xs text-muted-foreground">
-                Using token from App Settings. Enter a project-specific token below to override.
+                Using key from App Settings. Enter a project-specific key below to override.
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
-                Paste a token from <code className="px-1 bg-muted rounded">claude setup-token</code>
+                Enter your GLM API key from <code className="px-1 bg-muted rounded">Z.AI</code>
               </p>
             )}
             <PasswordInput
@@ -107,7 +107,7 @@ export function ClaudeAuthSection({
               onChange={(value) => onUpdateConfig({
                 claudeOAuthToken: value || undefined,
               })}
-              placeholder={envConfig.claudeTokenIsGlobal ? 'Enter to override global token...' : 'your-oauth-token-here'}
+              placeholder={envConfig.claudeTokenIsGlobal ? 'Enter to override global key...' : 'your-api-key-here'}
             />
           </div>
         </>

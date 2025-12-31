@@ -150,7 +150,7 @@ Please confirm you're ready by saying: I'm ready to work on ${selectedTask.title
 
   const handleClearTask = useCallback(() => {
     setAssociatedTask(id, undefined);
-    updateTerminal(id, { title: 'Claude' });
+    updateTerminal(id, { title: 'GLM' });
   }, [id, setAssociatedTask, updateTerminal]);
 
   return (

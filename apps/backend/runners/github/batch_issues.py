@@ -32,16 +32,16 @@ except (ImportError, ValueError, SystemError):
     from file_lock import locked_json_write
 
 
-class ClaudeBatchAnalyzer:
+class GLMBatchAnalyzer:
     """
-    Claude-based batch analyzer for GitHub issues.
+    GLM-based batch analyzer for GitHub issues.
 
-    Instead of doing O(n²) pairwise comparisons, this uses a single Claude call
+    Instead of doing O(n²) pairwise comparisons, this uses a single GLM call
     to analyze a group of issues and suggest optimal batching.
     """
 
     def __init__(self, project_dir: Path | None = None):
-        """Initialize Claude batch analyzer."""
+        """Initialize GLM batch analyzer."""
         self.project_dir = project_dir or Path.cwd()
         logger.info(
             f"[BATCH_ANALYZER] Initialized with project_dir: {self.project_dir}"
@@ -83,21 +83,23 @@ class ClaudeBatchAnalyzer:
             ]
 
         try:
+            import os
             import sys
 
-            import claude_agent_sdk  # noqa: F401 - check availability
+            # Check for GLM API key
+            if not os.environ.get("ZHIPUAI_API_KEY"):
+                raise RuntimeError("ZHIPUAI_API_KEY not set")
 
             backend_path = Path(__file__).parent.parent.parent
             sys.path.insert(0, str(backend_path))
-            from core.auth import ensure_claude_code_oauth_token
-        except ImportError as e:
-            logger.error(f"claude-agent-sdk not available: {e}")
+        except Exception as e:
+            logger.error(f"GLM client not available: {e}")
             # Fallback: each issue is its own batch
             return [
                 {
                     "issue_numbers": [issue["number"]],
                     "theme": issue.get("title", ""),
-                    "reasoning": "Claude SDK not available",
+                    "reasoning": "GLM client not available",
                     "confidence": 0.5,
                 }
                 for issue in issues
@@ -143,18 +145,17 @@ Respond with JSON only:
 }}"""
 
         try:
-            ensure_claude_code_oauth_token()
 
             logger.info(
                 f"[BATCH_ANALYZER] Analyzing {len(issues)} issues in single call"
             )
 
-            # Using Sonnet for better analysis (still just 1 call)
+            # Using GLM for analysis (single call)
             from core.simple_client import create_simple_client
 
             client = create_simple_client(
                 agent_type="batch_analysis",
-                model="claude-sonnet-4-20250514",
+                model="glm-4.7",
                 system_prompt="You are an expert at analyzing GitHub issues and grouping related ones. Respond ONLY with valid JSON. Do NOT use any tools.",
                 cwd=self.project_dir,
             )
@@ -408,7 +409,7 @@ class IssueBatcher:
         api_key: str | None = None,
         # AI validation settings
         validate_batches: bool = True,
-        validation_model: str = "claude-sonnet-4-20250514",
+        validation_model: str = "glm-4.7",
         validation_thinking_budget: int = 10000,  # Medium thinking
     ):
         self.github_dir = github_dir
@@ -421,10 +422,10 @@ class IssueBatcher:
         self.max_batch_size = max_batch_size
         self.validate_batches_enabled = validate_batches
 
-        # Initialize Claude batch analyzer
-        self.analyzer = ClaudeBatchAnalyzer(project_dir=self.project_dir)
+        # Initialize GLM batch analyzer
+        self.analyzer = GLMBatchAnalyzer(project_dir=self.project_dir)
 
-        # Initialize batch validator (uses Claude SDK with OAuth token)
+        # Initialize batch validator (uses GLM)
         self.validator = (
             BatchValidator(
                 project_dir=self.project_dir,

@@ -7,15 +7,33 @@ Reads configuration from task_metadata.json and provides resolved model IDs.
 """
 
 import json
+import os
 from pathlib import Path
 from typing import Literal, TypedDict
 
-# Model shorthand to full model ID mapping
-MODEL_ID_MAP: dict[str, str] = {
+# Model shorthand to full model ID mapping (Claude)
+CLAUDE_MODEL_ID_MAP: dict[str, str] = {
     "opus": "claude-opus-4-5-20251101",
     "sonnet": "claude-sonnet-4-5-20250929",
     "haiku": "claude-haiku-4-5-20251001",
 }
+
+# Model shorthand to GLM model ID mapping
+GLM_MODEL_ID_MAP: dict[str, str] = {
+    "opus": "glm-4.7",  # Most capable
+    "sonnet": "glm-4.7",  # Balanced
+    "haiku": "glm-4.7",  # Fast
+}
+
+# Select model map based on AI_PROVIDER environment variable
+def get_model_id_map() -> dict[str, str]:
+    """Get the appropriate model ID map based on AI_PROVIDER"""
+    provider = os.getenv("AI_PROVIDER", "claude").lower()
+    if provider == "glm":
+        return GLM_MODEL_ID_MAP
+    return CLAUDE_MODEL_ID_MAP
+
+MODEL_ID_MAP = get_model_id_map()
 
 # Thinking level to budget tokens mapping (None = no extended thinking)
 # Values must match auto-claude-ui/src/shared/constants/models.ts THINKING_BUDGET_MAP
@@ -93,16 +111,22 @@ def resolve_model_id(model: str) -> str:
     """
     Resolve a model shorthand (haiku, sonnet, opus) to a full model ID.
     If the model is already a full ID, return it unchanged.
+    
+    When AI_PROVIDER=glm, shortcuts map to GLM models.
+    When AI_PROVIDER=claude (default), shortcuts map to Claude models.
 
     Args:
         model: Model shorthand or full ID
 
     Returns:
-        Full Claude model ID
+        Full model ID (Claude or GLM based on AI_PROVIDER)
     """
+    # Get the current model map (respects AI_PROVIDER)
+    model_map = get_model_id_map()
+    
     # Check if it's a shorthand
-    if model in MODEL_ID_MAP:
-        return MODEL_ID_MAP[model]
+    if model in model_map:
+        return model_map[model]
 
     # Already a full model ID
     return model

@@ -125,7 +125,12 @@ async def run_autonomous_agent(
             print()
 
     # Check if this is a fresh start or continuation
+    # This determines whether we start with planning or coding phase
     first_run = is_first_run(spec_dir)
+
+    # Debug: Print what we detected
+    from debug import debug
+    debug("coder", f"Starting agent: first_run={first_run}, spec_dir={spec_dir}")
 
     # Track which phase we're in for logging
     current_log_phase = LogPhase.CODING
@@ -266,6 +271,7 @@ async def run_autonomous_agent(
 
         # Generate appropriate prompt
         if first_run:
+            debug("coder", f"Iteration {iteration}: Generating PLANNER prompt (first_run=True)")
             prompt = generate_planner_prompt(spec_dir, project_dir)
             first_run = False
             current_log_phase = LogPhase.PLANNING
@@ -274,6 +280,7 @@ async def run_autonomous_agent(
             if task_logger:
                 task_logger.set_session(iteration)
         else:
+            debug("coder", f"Iteration {iteration}: Generating CODER prompt (first_run=False)")
             # Switch to coding phase after planning
             if is_planning_phase:
                 is_planning_phase = False

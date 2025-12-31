@@ -205,7 +205,7 @@ class ProjectAnalyzer:
         # Check for existing profile
         existing = self.load_profile()
         if existing and not force and not self.should_reanalyze(existing):
-            print(f"Using cached security profile (hash: {existing.project_hash[:8]})")
+            # Silently use cached profile
             return existing
 
         print("Analyzing project structure for security profile...")

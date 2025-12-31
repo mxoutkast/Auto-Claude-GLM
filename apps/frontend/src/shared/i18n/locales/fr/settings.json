@@ -82,8 +82,8 @@
     "githubCLIPath": "Chemin GitHub CLI",
     "githubCLIPathDescription": "Chemin vers l'exécutable GitHub CLI (gh) (laisser vide pour détection automatique)",
     "githubCLIPathPlaceholder": "gh (par défaut)",
-    "claudePath": "Chemin Claude CLI",
-    "claudePathDescription": "Chemin vers l'exécutable Claude CLI (laisser vide pour détection automatique)",
+    "claudePath": "Chemin CLI Hérité",
+    "claudePathDescription": "Chemin vers l'exécutable CLI pour les fonctionnalités héritées (laisser vide pour détection automatique)",
     "claudePathPlaceholder": "claude (par défaut)",
     "detectedPath": "Détecté automatiquement",
     "detectedVersion": "Version",
@@ -184,8 +184,8 @@
       "useClaudeMdDescription": "Inclure les instructions CLAUDE.md dans le contexte de l'agent"
     },
     "claude": {
-      "title": "Auth Claude",
-      "description": "Authentification Claude"
+      "title": "Auth IA",
+      "description": "Authentification IA"
     },
     "linear": {
       "title": "Linear",
@@ -267,9 +267,9 @@
   },
   "integrations": {
     "title": "Intégrations",
-    "description": "Gérer les comptes Claude et les clés API",
-    "claudeAccounts": "Comptes Claude",
-    "claudeAccountsDescription": "Ajoutez plusieurs abonnements Claude pour basculer automatiquement entre eux quand vous atteignez les limites.",
+    "description": "Gérer les comptes IA et les clés API",
+    "claudeAccounts": "Comptes IA",
+    "claudeAccountsDescription": "Ajoutez plusieurs abonnements IA pour basculer automatiquement entre eux quand vous atteignez les limites.",
     "noAccountsYet": "Aucun compte configuré",
     "default": "Par défaut",
     "active": "Actif",
@@ -277,14 +277,14 @@
     "needsAuth": "Auth requise",
     "authenticate": "Authentifier",
     "setActive": "Définir actif",
-    "manualTokenEntry": "Saisie manuelle du token",
-    "runSetupToken": "Exécutez claude setup-token pour obtenir votre token",
-    "tokenPlaceholder": "sk-ant-oat01-...",
+    "manualTokenEntry": "Saisie manuelle de la clé",
+    "runSetupToken": "Entrez votre clé API",
+    "tokenPlaceholder": "Votre clé API...",
     "emailPlaceholder": "Email (optionnel, pour l'affichage)",
     "saveToken": "Enregistrer le token",
     "accountNamePlaceholder": "Nom du compte (ex: Travail, Personnel)",
     "autoSwitching": "Basculement automatique de compte",
-    "autoSwitchingDescription": "Basculer automatiquement entre les comptes Claude pour éviter les interruptions. Configurez la surveillance proactive pour changer avant d'atteindre les limites.",
+    "autoSwitchingDescription": "Basculer automatiquement entre les comptes IA pour éviter les interruptions. Configurez la surveillance proactive pour changer avant d'atteindre les limites.",
     "enableAutoSwitching": "Activer le basculement automatique",
     "masterSwitch": "Interrupteur principal pour toutes les fonctionnalités auto-swap",
     "proactiveMonitoring": "Surveillance proactive",

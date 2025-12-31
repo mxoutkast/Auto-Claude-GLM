@@ -134,7 +134,7 @@ export class TitleGenerator extends EventEmitter {
 
     const autoBuildEnv = this.loadAutoBuildEnv();
     debug('Environment loaded', {
-      hasOAuthToken: !!autoBuildEnv.CLAUDE_CODE_OAUTH_TOKEN
+      aiProvider: autoBuildEnv.AI_PROVIDER || 'claude'
     });
 
     // Get active Claude profile environment (CLAUDE_CONFIG_DIR if not default)
@@ -225,7 +225,7 @@ Title:`;
   }
 
   /**
-   * Create the Python script to generate title using Claude Agent SDK
+   * Create the Python script to generate title using GLM or Claude
    */
   private createGenerationScript(prompt: string): string {
     // Escape the prompt for Python string - use JSON.stringify for safe escaping
@@ -234,49 +234,86 @@ Title:`;
     return `
 import asyncio
 import sys
+import os
 
 async def generate_title():
     try:
-        from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
-
-        prompt = ${escapedPrompt}
-
-        # Create a minimal client for simple text generation (no tools needed)
-        client = ClaudeSDKClient(
-            options=ClaudeAgentOptions(
-                model="claude-haiku-4-5",
-                system_prompt="You generate short, concise task titles (3-7 words). Output ONLY the title, nothing else. No quotes, no explanation, no preamble.",
-                max_turns=1,
+        # Check which AI provider to use
+        ai_provider = os.environ.get("AI_PROVIDER", "claude").lower()
+        
+        if ai_provider == "glm":
+            # Use GLM (Zhipu AI via Z.AI Coding Plan)
+            from openai import OpenAI
+            
+            api_key = os.environ.get("ZHIPUAI_API_KEY")
+            if not api_key:
+                print("ZHIPUAI_API_KEY not set", file=sys.stderr)
+                sys.exit(1)
+            
+            client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.z.ai/api/coding/paas/v4"
             )
-        )
+            
+            response = client.chat.completions.create(
+                model="glm-4.7",
+                messages=[
+                    {"role": "system", "content": "You generate short, concise task titles (3-7 words). Output ONLY the title, nothing else. No quotes, no explanation, no preamble."},
+                    {"role": "user", "content": ${escapedPrompt}}
+                ],
+                max_tokens=50,
+                temperature=0.3
+            )
+            
+            title = response.choices[0].message.content.strip()
+            title = title.strip('"').strip("'")
+            title = title.split('\\n')[0].strip()
+            if title:
+                print(title)
+                sys.exit(0)
+            sys.exit(1)
+        else:
+            # Use Claude SDK
+            from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
 
-        async with client:
-            # Send the query
-            await client.query(prompt)
+            prompt = ${escapedPrompt}
 
-            # Collect response text from AssistantMessage
-            response_text = ""
-            async for msg in client.receive_response():
-                msg_type = type(msg).__name__
-                if msg_type == "AssistantMessage" and hasattr(msg, "content"):
-                    for block in msg.content:
-                        block_type = type(block).__name__
-                        if block_type == "TextBlock" and hasattr(block, "text"):
-                            response_text += block.text
+            # Create a minimal client for simple text generation (no tools needed)
+            client = ClaudeSDKClient(
+                options=ClaudeAgentOptions(
+                    model="claude-haiku-4-5",
+                    system_prompt="You generate short, concise task titles (3-7 words). Output ONLY the title, nothing else. No quotes, no explanation, no preamble.",
+                    max_turns=1,
+                )
+            )
 
-            if response_text:
-                # Clean up the result
-                title = response_text.strip()
-                # Remove any quotes
-                title = title.strip('"').strip("'")
-                # Take first line only
-                title = title.split('\\n')[0].strip()
-                if title:
-                    print(title)
-                    sys.exit(0)
+            async with client:
+                # Send the query
+                await client.query(prompt)
 
-        # If we get here, no valid response
-        sys.exit(1)
+                # Collect response text from AssistantMessage
+                response_text = ""
+                async for msg in client.receive_response():
+                    msg_type = type(msg).__name__
+                    if msg_type == "AssistantMessage" and hasattr(msg, "content"):
+                        for block in msg.content:
+                            block_type = type(block).__name__
+                            if block_type == "TextBlock" and hasattr(block, "text"):
+                                response_text += block.text
+
+                if response_text:
+                    # Clean up the result
+                    title = response_text.strip()
+                    # Remove any quotes
+                    title = title.strip('"').strip("'")
+                    # Take first line only
+                    title = title.split('\\n')[0].strip()
+                    if title:
+                        print(title)
+                        sys.exit(0)
+
+            # If we get here, no valid response
+            sys.exit(1)
 
     except ImportError as e:
         print(f"Import error: {e}", file=sys.stderr)

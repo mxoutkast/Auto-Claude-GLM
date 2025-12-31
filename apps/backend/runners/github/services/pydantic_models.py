@@ -2,24 +2,18 @@
 Pydantic Models for Structured AI Outputs
 ==========================================
 
-These models define JSON schemas for Claude Agent SDK structured outputs.
+These models define JSON schemas for structured AI outputs.
 Used to guarantee valid, validated JSON from AI responses in PR reviews.
 
 Usage:
-    from claude_agent_sdk import query
+    from core.glm_client import GLMAgentClient
     from .pydantic_models import FollowupReviewResponse
 
-    async for message in query(
-        prompt="...",
-        options={
-            "output_format": {
-                "type": "json_schema",
-                "schema": FollowupReviewResponse.model_json_schema()
-            }
-        }
-    ):
-        if hasattr(message, 'structured_output'):
-            result = FollowupReviewResponse.model_validate(message.structured_output)
+    # Use schema for structured output
+    schema = FollowupReviewResponse.model_json_schema()
+    
+    # Parse response
+    result = FollowupReviewResponse.model_validate(json_data)
 """
 
 from __future__ import annotations

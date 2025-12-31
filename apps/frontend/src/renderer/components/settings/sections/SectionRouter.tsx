@@ -107,13 +107,13 @@ export function SectionRouter({
     case 'claude':
       return (
         <SettingsSection
-          title="Claude Authentication"
-          description="Configure Claude CLI authentication for this project"
+          title="AI Authentication"
+          description="Configure AI API keys for this project"
         >
           <InitializationGuard
             initialized={!!project.autoBuildPath}
-            title="Claude Authentication"
-            description="Configure Claude CLI authentication"
+            title="AI Authentication"
+            description="Configure AI API keys"
           >
             <EnvironmentSettings
               envConfig={envConfig}

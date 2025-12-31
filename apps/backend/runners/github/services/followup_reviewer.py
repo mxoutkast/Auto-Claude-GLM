@@ -664,12 +664,20 @@ Analyze this follow-up review context and provide your structured response.
 """
 
         try:
-            # Use Claude Agent SDK query() with structured outputs
-            # Reference: https://platform.claude.com/docs/en/agent-sdk/structured-outputs
-            from claude_agent_sdk import ClaudeAgentOptions, query
+            # Use GLM client with JSON response format
+            import json
+            import os
+            
+            from core.glm_client import GLMAgentClient
+            from core.glm_options import GLMAgentOptions
             from phase_config import get_thinking_budget
+            
+            # Check for API key
+            if not os.environ.get("ZHIPUAI_API_KEY"):
+                logger.warning("ZHIPUAI_API_KEY not set, skipping AI review")
+                return None
 
-            model = self.config.model or "claude-sonnet-4-5-20250929"
+            model = self.config.model or "glm-4.7"
             thinking_level = self.config.thinking_level or "medium"
             thinking_budget = get_thinking_budget(thinking_level)
 
@@ -678,84 +686,69 @@ Analyze this follow-up review context and provide your structured response.
             logger.debug(
                 f"[Followup] Using output_format schema: {list(schema.get('properties', {}).keys())}"
             )
-            print(f"[Followup] SDK query with output_format, model={model}", flush=True)
+            print(f"[Followup] GLM query with JSON format, model={model}", flush=True)
 
-            # Iterate through messages from the query
-            # Note: max_turns=2 because structured output uses a tool call + response
-            async for message in query(
-                prompt=user_message,
-                options=ClaudeAgentOptions(
+            # Create GLM client
+            client = GLMAgentClient(
+                options=GLMAgentOptions(
                     model=model,
-                    system_prompt="You are a code review assistant. Analyze the provided context and provide structured feedback.",
+                    system_prompt="You are a code review assistant. Analyze the provided context and provide structured feedback in JSON format matching the provided schema.",
                     allowed_tools=[],
-                    max_turns=2,  # Need 2 turns for structured output tool call
+                    max_turns=2,
                     max_thinking_tokens=thinking_budget,
                     output_format={
                         "type": "json_schema",
                         "schema": schema,
                     },
-                ),
-            ):
-                msg_type = type(message).__name__
-
-                # SDK delivers structured output via ToolUseBlock named 'StructuredOutput'
-                # in an AssistantMessage
-                if msg_type == "AssistantMessage":
-                    content = getattr(message, "content", [])
-                    for block in content:
-                        block_type = type(block).__name__
-                        if block_type == "ToolUseBlock":
-                            tool_name = getattr(block, "name", "")
-                            if tool_name == "StructuredOutput":
-                                # Extract structured data from tool input
-                                structured_data = getattr(block, "input", None)
-                                if structured_data:
-                                    logger.info(
-                                        "[Followup] Found StructuredOutput tool use"
-                                    )
-                                    print(
-                                        "[Followup] Using SDK structured output",
-                                        flush=True,
-                                    )
-                                    # Validate with Pydantic and convert
-                                    result = FollowupReviewResponse.model_validate(
-                                        structured_data
-                                    )
-                                    return self._convert_structured_to_internal(result)
-
-                    # Also check for direct structured_output attribute (SDK validated JSON)
-                    if (
-                        hasattr(message, "structured_output")
-                        and message.structured_output
-                    ):
-                        logger.info(
-                            "[Followup] Found structured_output attribute on message"
-                        )
-                        print(
-                            "[Followup] Using SDK structured output (direct attribute)",
-                            flush=True,
-                        )
-                        result = FollowupReviewResponse.model_validate(
-                            message.structured_output
-                        )
-                        return self._convert_structured_to_internal(result)
-
-                # Handle ResultMessage for errors
-                if msg_type == "ResultMessage":
-                    subtype = getattr(message, "subtype", None)
-                    if subtype == "error_max_structured_output_retries":
-                        logger.warning(
-                            "Claude could not produce valid structured output after retries"
-                        )
-                        return None
-
-            logger.warning("No structured output received from AI")
+                )
+            )
+            
+            async with client:
+                await client.query(user_message)
+                response_text = ""
+                async for msg in client.receive_response():
+                    msg_type = type(msg).__name__
+                    if msg_type == "AssistantMessage":
+                        for block in getattr(msg, "content", []):
+                            if hasattr(block, "text"):
+                                response_text += block.text
+                
+                # Parse JSON response
+                if response_text:
+                    # Extract JSON from response
+                    try:
+                        # Try to parse directly
+                        data = json.loads(response_text)
+                    except json.JSONDecodeError:
+                        # Try to extract JSON from markdown code block
+                        if "```json" in response_text:
+                            json_str = response_text.split("```json")[1].split("```")[0]
+                            data = json.loads(json_str)
+                        elif "```" in response_text:
+                            json_str = response_text.split("```")[1].split("```")[0]
+                            data = json.loads(json_str)
+                        else:
+                            # Try to find JSON object
+                            start = response_text.find("{")
+                            end = response_text.rfind("}") + 1
+                            if start >= 0 and end > start:
+                                data = json.loads(response_text[start:end])
+                            else:
+                                logger.warning("Could not extract JSON from response")
+                                return None
+                    
+                    logger.info("[Followup] Parsed GLM JSON response")
+                    print("[Followup] Using GLM structured output", flush=True)
+                    result = FollowupReviewResponse.model_validate(data)
+                    return self._convert_structured_to_internal(result)
+            
+            logger.warning("No response received from AI")
             return None
 
         except ValueError as e:
-            # OAuth token not found
-            logger.warning(f"No OAuth token available for AI review: {e}")
-            print("AI review failed: No OAuth token found", flush=True)
+            # API key or config issue
+            logger.warning(f"AI review configuration error: {e}")
+            print(f"AI review failed: {e}", flush=True)
             return None
         except Exception as e:
             logger.error(f"AI review with structured output failed: {e}")

@@ -204,7 +204,7 @@ async def _call_claude_haiku(prompt: str) -> str:
 
     client = create_simple_client(
         agent_type="commit_message",
-        model="claude-haiku-4-5-20251001",
+        model="glm-4",
         system_prompt=SYSTEM_PROMPT,
         max_thinking_tokens=1024,  # Low thinking for speed
     )

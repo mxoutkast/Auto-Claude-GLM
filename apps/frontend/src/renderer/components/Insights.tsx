@@ -187,6 +187,17 @@ export function Insights({ projectId }: InsightsProps) {
     // If we have a session, persist the config
     if (session?.id) {
       await updateModelConfig(projectId, session.id, config);
+    } else {
+      // No session yet, but still update the store so it's ready for the first message
+      useInsightsStore.getState().setSession({
+        id: '',
+        projectId,
+        title: 'New Conversation',
+        messages: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        modelConfig: config
+      } as any);
     }
   };
 
@@ -312,7 +323,7 @@ export function Insights({ projectId }: InsightsProps) {
                     Assistant
                   </div>
                   {streamingContent && (
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <div className="text-sm text-foreground [&_h1]:text-base [&_h1]:font-normal [&_h2]:text-base [&_h2]:font-normal [&_h3]:text-sm [&_h3]:font-normal [&_h4]:text-sm [&_h4]:font-normal [&_h5]:text-sm [&_h5]:font-normal [&_h6]:text-sm [&_h6]:font-normal [&_strong]:font-normal [&_b]:font-normal">
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                         {streamingContent}
                       </ReactMarkdown>
@@ -418,7 +429,7 @@ function MessageBubble({
         <div className="text-sm font-medium text-foreground">
           {isUser ? 'You' : 'Assistant'}
         </div>
-        <div className="prose prose-sm dark:prose-invert max-w-none">
+        <div className="text-sm text-foreground [&_h1]:text-base [&_h1]:font-normal [&_h2]:text-base [&_h2]:font-normal [&_h3]:text-sm [&_h3]:font-normal [&_h4]:text-sm [&_h4]:font-normal [&_h5]:text-sm [&_h5]:font-normal [&_h6]:text-sm [&_h6]:font-normal [&_strong]:font-normal [&_b]:font-normal">
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
             {message.content}
           </ReactMarkdown>

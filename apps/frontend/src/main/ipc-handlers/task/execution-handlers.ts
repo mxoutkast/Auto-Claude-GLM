@@ -83,16 +83,19 @@ export function registerTaskExecutionHandlers(
         return;
       }
 
-      // Check authentication - Claude requires valid auth to run tasks
-      const profileManager = getClaudeProfileManager();
-      if (!profileManager.hasValidAuth()) {
-        console.warn('[TASK_START] No valid authentication for active profile');
-        mainWindow.webContents.send(
-          IPC_CHANNELS.TASK_ERROR,
-          taskId,
-          'Claude authentication required. Please go to Settings > Claude Profiles and authenticate your account, or set an OAuth token.'
-        );
-        return;
+      // Check authentication - only required for Claude provider
+      const aiProvider = process.env.AI_PROVIDER || 'claude';
+      if (aiProvider === 'claude') {
+        const profileManager = getClaudeProfileManager();
+        if (!profileManager.hasValidAuth()) {
+          console.warn('[TASK_START] No valid authentication for active profile');
+          mainWindow.webContents.send(
+            IPC_CHANNELS.TASK_ERROR,
+            taskId,
+            'Claude authentication required. Please go to Settings > Claude Profiles and authenticate your account, or set an OAuth token.'
+          );
+          return;
+        }
       }
 
       console.warn('[TASK_START] Found task:', task.specId, 'status:', task.status, 'subtasks:', task.subtasks.length);
@@ -457,18 +460,21 @@ export function registerTaskExecutionHandlers(
             return { success: false, error: gitStatusCheck.error || 'Git repository required' };
           }
 
-          // Check authentication before auto-starting
-          const profileManager = getClaudeProfileManager();
-          if (!profileManager.hasValidAuth()) {
-            console.warn('[TASK_UPDATE_STATUS] No valid authentication for active profile');
-            if (mainWindow) {
-              mainWindow.webContents.send(
-                IPC_CHANNELS.TASK_ERROR,
-                taskId,
-                'Claude authentication required. Please go to Settings > Claude Profiles and authenticate your account, or set an OAuth token.'
-              );
+          // Check authentication before auto-starting - only required for Claude provider
+          const aiProvider = process.env.AI_PROVIDER || 'claude';
+          if (aiProvider === 'claude') {
+            const profileManager = getClaudeProfileManager();
+            if (!profileManager.hasValidAuth()) {
+              console.warn('[TASK_UPDATE_STATUS] No valid authentication for active profile');
+              if (mainWindow) {
+                mainWindow.webContents.send(
+                  IPC_CHANNELS.TASK_ERROR,
+                  taskId,
+                  'Claude authentication required. Please go to Settings > Claude Profiles and authenticate your account, or set an OAuth token.'
+                );
+              }
+              return { success: false, error: 'Claude authentication required' };
             }
-            return { success: false, error: 'Claude authentication required' };
           }
 
           console.warn('[TASK_UPDATE_STATUS] Auto-starting task:', taskId);

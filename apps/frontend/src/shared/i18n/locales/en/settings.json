@@ -82,8 +82,8 @@
     "githubCLIPath": "GitHub CLI Path",
     "githubCLIPathDescription": "Path to GitHub CLI (gh) executable (leave empty for auto-detection)",
     "githubCLIPathPlaceholder": "gh (default)",
-    "claudePath": "Claude CLI Path",
-    "claudePathDescription": "Path to Claude CLI executable (leave empty for auto-detection)",
+    "claudePath": "Legacy CLI Path",
+    "claudePathDescription": "Path to CLI executable for legacy features (leave empty for auto-detection)",
     "claudePathPlaceholder": "claude (default)",
     "detectedPath": "Auto-detected",
     "detectedVersion": "Version",
@@ -184,8 +184,8 @@
       "useClaudeMdDescription": "Include CLAUDE.md instructions in agent context"
     },
     "claude": {
-      "title": "Claude Auth",
-      "description": "Claude authentication"
+      "title": "AI Auth",
+      "description": "AI authentication"
     },
     "linear": {
       "title": "Linear",
@@ -267,9 +267,9 @@
   },
   "integrations": {
     "title": "Integrations",
-    "description": "Manage Claude accounts and API keys",
-    "claudeAccounts": "Claude Accounts",
-    "claudeAccountsDescription": "Add multiple Claude subscriptions to automatically switch between them when you hit rate limits.",
+    "description": "Manage AI accounts and API keys",
+    "claudeAccounts": "AI Accounts",
+    "claudeAccountsDescription": "Add multiple AI subscriptions to automatically switch between them when you hit rate limits.",
     "noAccountsYet": "No accounts configured yet",
     "default": "Default",
     "active": "Active",
@@ -278,13 +278,13 @@
     "authenticate": "Authenticate",
     "setActive": "Set Active",
     "manualTokenEntry": "Manual Token Entry",
-    "runSetupToken": "Run claude setup-token to get your token",
-    "tokenPlaceholder": "sk-ant-oat01-...",
+    "runSetupToken": "Enter your API key",
+    "tokenPlaceholder": "Your API key...",
     "emailPlaceholder": "Email (optional, for display)",
     "saveToken": "Save Token",
     "accountNamePlaceholder": "Account name (e.g., Work, Personal)",
     "autoSwitching": "Automatic Account Switching",
-    "autoSwitchingDescription": "Automatically switch between Claude accounts to avoid interruptions. Configure proactive monitoring to switch before hitting limits.",
+    "autoSwitchingDescription": "Automatically switch between AI accounts to avoid interruptions. Configure proactive monitoring to switch before hitting limits.",
     "enableAutoSwitching": "Enable automatic switching",
     "masterSwitch": "Master switch for all auto-swap features",
     "proactiveMonitoring": "Proactive Monitoring",

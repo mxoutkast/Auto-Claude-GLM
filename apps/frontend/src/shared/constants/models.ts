@@ -10,16 +10,20 @@ import type { AgentProfile, PhaseModelConfig, FeatureModelConfig, FeatureThinkin
 // ============================================
 
 export const AVAILABLE_MODELS = [
-  { value: 'opus', label: 'Claude Opus 4.5' },
-  { value: 'sonnet', label: 'Claude Sonnet 4.5' },
-  { value: 'haiku', label: 'Claude Haiku 4.5' }
+  { value: 'glm-4-7', label: 'GLM-4.7' },
+  { value: 'glm-4-6', label: 'GLM-4.6' },
+  { value: 'opus', label: 'Opus (Legacy)' },
+  { value: 'sonnet', label: 'Sonnet (Legacy)' },
+  { value: 'haiku', label: 'Haiku (Legacy)' }
 ] as const;
 
-// Maps model shorthand to actual Claude model IDs
+// Maps model shorthand to actual model IDs (Claude and GLM)
 export const MODEL_ID_MAP: Record<string, string> = {
   opus: 'claude-opus-4-5-20251101',
   sonnet: 'claude-sonnet-4-5-20250929',
-  haiku: 'claude-haiku-4-5-20251001'
+  haiku: 'claude-haiku-4-5-20251001',
+  'glm-4-7': 'glm-4.7',
+  'glm-4-6': 'glm-4.6'
 } as const;
 
 // Maps thinking levels to budget tokens (null = no extended thinking)
@@ -49,12 +53,12 @@ export const THINKING_LEVELS = [
 // ============================================
 
 // Default phase model configuration for Auto profile
-// Uses Opus across all phases for maximum quality
+// Uses GLM-4.7 across all phases for maximum quality
 export const DEFAULT_PHASE_MODELS: PhaseModelConfig = {
-  spec: 'opus',       // Best quality for spec creation
-  planning: 'opus',   // Complex architecture decisions benefit from Opus
-  coding: 'opus',     // Highest quality implementation
-  qa: 'opus'          // Thorough QA review
+  spec: 'glm-4-7',       // Best quality for spec creation
+  planning: 'glm-4-7',   // Complex architecture decisions
+  coding: 'glm-4-7',     // Highest quality implementation
+  qa: 'glm-4-7'          // Thorough QA review
 };
 
 // Default phase thinking configuration for Auto profile
@@ -71,11 +75,11 @@ export const DEFAULT_PHASE_THINKING: import('../types/settings').PhaseThinkingCo
 
 // Default feature model configuration (for insights, ideation, roadmap, github)
 export const DEFAULT_FEATURE_MODELS: FeatureModelConfig = {
-  insights: 'sonnet',     // Fast, responsive chat
-  ideation: 'opus',       // Creative ideation benefits from Opus
-  roadmap: 'opus',        // Strategic planning benefits from Opus
-  githubIssues: 'opus',   // Issue triage and analysis benefits from Opus
-  githubPrs: 'opus'       // PR review benefits from thorough Opus analysis
+  insights: 'glm-4-7',     // Fast, responsive chat
+  ideation: 'glm-4-7',     // Creative ideation
+  roadmap: 'glm-4-7',      // Strategic planning
+  githubIssues: 'glm-4-7', // Issue triage and analysis
+  githubPrs: 'glm-4-7'     // PR review
 };
 
 // Default feature thinking configuration
@@ -99,21 +103,34 @@ export const FEATURE_LABELS: Record<keyof FeatureModelConfig, { label: string; d
 // Default agent profiles for preset model/thinking configurations
 export const DEFAULT_AGENT_PROFILES: AgentProfile[] = [
   {
-    id: 'auto',
-    name: 'Auto (Optimized)',
-    description: 'Uses Opus across all phases with optimized thinking levels',
-    model: 'opus',  // Fallback/default model
-    thinkingLevel: 'high',
+    id: 'glm-47',
+    name: 'GLM-4.7 (Default)',
+    description: 'GLM-4.7 with balanced thinking for general tasks',
+    model: 'glm-4-7',
+    thinkingLevel: 'medium',
     icon: 'Sparkles',
     isAutoProfile: true,
-    phaseModels: DEFAULT_PHASE_MODELS,
+    phaseModels: {
+      spec: 'glm-4-7',
+      planning: 'glm-4-7',
+      coding: 'glm-4-7',
+      qa: 'glm-4-7'
+    },
     phaseThinking: DEFAULT_PHASE_THINKING
+  },
+  {
+    id: 'glm-46',
+    name: 'GLM-4.6',
+    description: 'GLM-4.6 uncensored narrative mode for creative responses',
+    model: 'glm-4-6',
+    thinkingLevel: 'low',
+    icon: 'Zap'
   },
   {
     id: 'complex',
     name: 'Complex Tasks',
     description: 'For intricate, multi-step implementations requiring deep analysis',
-    model: 'opus',
+    model: 'glm-4-7',
     thinkingLevel: 'ultrathink',
     icon: 'Brain'
   },
@@ -121,7 +138,7 @@ export const DEFAULT_AGENT_PROFILES: AgentProfile[] = [
     id: 'balanced',
     name: 'Balanced',
     description: 'Good balance of speed and quality for most tasks',
-    model: 'sonnet',
+    model: 'glm-4-7',
     thinkingLevel: 'medium',
     icon: 'Scale'
   },
@@ -129,7 +146,7 @@ export const DEFAULT_AGENT_PROFILES: AgentProfile[] = [
     id: 'quick',
     name: 'Quick Edits',
     description: 'Fast iterations for simple changes and quick fixes',
-    model: 'haiku',
+    model: 'glm-4-6',
     thinkingLevel: 'low',
     icon: 'Zap'
   }

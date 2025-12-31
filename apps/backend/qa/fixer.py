@@ -6,8 +6,11 @@ Runs QA fixer sessions to resolve issues identified by the reviewer.
 """
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from claude_agent_sdk import ClaudeSDKClient
+if TYPE_CHECKING:
+    from core.glm_client import GLMAgentClient
+
 from debug import debug, debug_detailed, debug_error, debug_section, debug_success
 from task_logger import (
     LogEntryType,
@@ -40,7 +43,7 @@ def load_qa_fixer_prompt() -> str:
 
 
 async def run_qa_fixer_session(
-    client: ClaudeSDKClient,
+    client: "GLMAgentClient",
     spec_dir: Path,
     fix_session: int,
     verbose: bool = False,
@@ -49,7 +52,7 @@ async def run_qa_fixer_session(
     Run a QA fixer agent session.
 
     Args:
-        client: Claude SDK client
+        client: GLM Agent client
         spec_dir: Spec directory
         fix_session: Fix iteration number
         verbose: Whether to show detailed output

@@ -146,7 +146,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
 
           alert(
             `Authenticating "${profileName}"...\n\n` +
-            `A browser window will open for you to log in with your Claude account.\n\n` +
+            `A browser window will open for you to log in with your AI account.\n\n` +
             `The authentication will be saved automatically once complete.`
           );
         } else {
@@ -225,7 +225,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
       if (initResult.success) {
         alert(
           `Authenticating profile...\n\n` +
-          `A browser window will open for you to log in with your Claude account.\n\n` +
+          `A browser window will open for you to log in with your AI account.\n\n` +
           `The authentication will be saved automatically once complete.`
         );
       } else {
@@ -296,10 +296,10 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Configure Claude Authentication
+            Configure AI Authentication
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Add your Claude accounts to enable AI features
+            Add your AI accounts to enable AI features
           </p>
         </div>
 
@@ -332,7 +332,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                   <Info className="h-5 w-5 text-info shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm text-muted-foreground">
-                      Add multiple Claude subscriptions to automatically switch between them when you hit rate limits.
+                      Add multiple AI subscriptions to automatically switch between them when you hit rate limits.
                     </p>
                   </div>
                 </div>
@@ -630,7 +630,7 @@ export function OAuthStep({ onNext, onBack, onSkip }: OAuthStepProps) {
                   <div className="flex items-start gap-3">
                     <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
                     <p className="text-sm text-success">
-                      You have at least one authenticated Claude account. You can continue to the next step.
+                      You have at least one authenticated AI account. You can continue to the next step.
                     </p>
                   </div>
                 </CardContent>

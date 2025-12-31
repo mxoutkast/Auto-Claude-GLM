@@ -104,7 +104,7 @@ async def spawn_security_review(
     pr_context: PRContext,
     project_dir: Path,
     github_dir: Path,
-    model: str = "claude-sonnet-4-5-20250929",
+    model: str = "glm-4.7",
 ) -> list[PRReviewFinding]:
     """
     Spawn a focused security review subagent for specific files.
@@ -191,7 +191,7 @@ async def spawn_quality_review(
     pr_context: PRContext,
     project_dir: Path,
     github_dir: Path,
-    model: str = "claude-sonnet-4-5-20250929",
+    model: str = "glm-4.7",
 ) -> list[PRReviewFinding]:
     """
     Spawn a focused code quality review subagent for specific files.
@@ -271,7 +271,7 @@ async def spawn_deep_analysis(
     pr_context: PRContext,
     project_dir: Path,
     github_dir: Path,
-    model: str = "claude-sonnet-4-5-20250929",
+    model: str = "glm-4.7",
 ) -> list[PRReviewFinding]:
     """
     Spawn a deep analysis subagent to investigate a specific concern.

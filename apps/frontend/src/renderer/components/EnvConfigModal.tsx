@@ -45,8 +45,8 @@ export function EnvConfigModal({
   open,
   onOpenChange,
   onConfigured,
-  title = 'Claude Authentication Required',
-  description = 'A Claude Code OAuth token is required to use AI features like Ideation and Roadmap generation.',
+  title = 'AI API Key Required',
+  description = 'A GLM API key is required to use AI features like Ideation and Roadmap generation.',
   projectId
 }: EnvConfigModalProps) {
   const [token, setToken] = useState('');
@@ -317,7 +317,7 @@ export function EnvConfigModal({
                         Use Existing Account
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        You have {claudeProfiles.length} authenticated Claude account{claudeProfiles.length > 1 ? 's' : ''}. Select one to use:
+                        You have {claudeProfiles.length} authenticated AI account{claudeProfiles.length > 1 ? 's' : ''}. Select one to use:
                       </p>
                     </div>
                   </div>
@@ -415,8 +415,8 @@ export function EnvConfigModal({
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {claudeProfiles.length > 0
-                          ? 'Add a new Claude account by logging in with your browser.'
-                          : 'Click below to open your browser and log in with your Claude account.'
+                          ? 'Add a new AI account by logging in with your browser.'
+                          : 'Click below to open your browser and log in with your AI account.'
                         }
                       </p>
                     </div>

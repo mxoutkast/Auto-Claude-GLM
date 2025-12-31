@@ -85,6 +85,9 @@ class TimelinePersistence:
 
         except Exception as e:
             logger.error(f"Failed to load timelines: {e}")
+            # Return empty timelines and continue - corrupted cache will be rebuilt
+            print(f"Failed to load timelines: {e}")
+            return {}
 
         return timelines
 

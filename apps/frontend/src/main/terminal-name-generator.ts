@@ -114,7 +114,7 @@ export class TerminalNameGenerator extends EventEmitter {
       return null;
     }
 
-    // Check if Python environment is ready (has claude_agent_sdk installed)
+    // Check if Python environment is ready (has required packages installed)
     if (!pythonEnvManager.isEnvReady()) {
       debug('Python environment not ready, initializing...');
       const status = await pythonEnvManager.initialize(autoBuildSource);
@@ -124,7 +124,7 @@ export class TerminalNameGenerator extends EventEmitter {
       }
     }
 
-    // Get the venv Python path (where claude_agent_sdk is installed)
+    // Get the venv Python path (where dependencies are installed)
     const venvPythonPath = pythonEnvManager.getPythonPath();
     if (!venvPythonPath) {
       debug('Venv Python path not available');
@@ -138,14 +138,14 @@ export class TerminalNameGenerator extends EventEmitter {
 
     const autoBuildEnv = this.loadAutoBuildEnv();
     debug('Environment loaded', {
-      hasOAuthToken: !!autoBuildEnv.CLAUDE_CODE_OAUTH_TOKEN
+      aiProvider: autoBuildEnv.AI_PROVIDER || 'claude'
     });
 
     // Get active Claude profile environment (CLAUDE_CONFIG_DIR if not default)
     const profileEnv = getProfileEnv();
 
     return new Promise((resolve) => {
-      // Use the venv Python where claude_agent_sdk is installed
+      // Use the venv Python where dependencies are installed
       const [pythonCommand, pythonBaseArgs] = parsePythonCommand(venvPythonPath);
       const childProcess = spawn(pythonCommand, [...pythonBaseArgs, '-c', script], {
         cwd: autoBuildSource,
@@ -239,7 +239,7 @@ Output ONLY the name (2-3 words), nothing else. Examples: "npm build", "git logs
   }
 
   /**
-   * Create the Python script to generate terminal name using Claude Agent SDK
+   * Create the Python script to generate terminal name using GLM or Claude
    */
   private createGenerationScript(prompt: string): string {
     // Escape the prompt for Python string - use JSON.stringify for safe escaping
@@ -248,49 +248,86 @@ Output ONLY the name (2-3 words), nothing else. Examples: "npm build", "git logs
     return `
 import asyncio
 import sys
+import os
 
 async def generate_name():
     try:
-        from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
-
-        prompt = ${escapedPrompt}
-
-        # Create a minimal client for simple text generation (no tools needed)
-        client = ClaudeSDKClient(
-            options=ClaudeAgentOptions(
-                model="claude-haiku-4-5",
-                system_prompt="You generate very short, concise terminal names (2-3 words MAX). Output ONLY the name, nothing else. No quotes, no explanation, no preamble. Keep it as short as possible while being descriptive.",
-                max_turns=1,
+        # Check which AI provider to use
+        ai_provider = os.environ.get("AI_PROVIDER", "claude").lower()
+        
+        if ai_provider == "glm":
+            # Use GLM (Zhipu AI via Z.AI Coding Plan)
+            from openai import OpenAI
+            
+            api_key = os.environ.get("ZHIPUAI_API_KEY")
+            if not api_key:
+                print("ZHIPUAI_API_KEY not set", file=sys.stderr)
+                sys.exit(1)
+            
+            client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.z.ai/api/coding/paas/v4"
             )
-        )
+            
+            response = client.chat.completions.create(
+                model="glm-4.7",
+                messages=[
+                    {"role": "system", "content": "You generate very short, concise terminal names (2-3 words MAX). Output ONLY the name, nothing else. No quotes, no explanation, no preamble. Keep it as short as possible while being descriptive."},
+                    {"role": "user", "content": ${escapedPrompt}}
+                ],
+                max_tokens=20,
+                temperature=0.3
+            )
+            
+            name = response.choices[0].message.content.strip()
+            name = name.strip('"').strip("'")
+            name = name.split('\\n')[0].strip()
+            if name:
+                print(name)
+                sys.exit(0)
+            sys.exit(1)
+        else:
+            # Use Claude SDK
+            from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
 
-        async with client:
-            # Send the query
-            await client.query(prompt)
+            prompt = ${escapedPrompt}
 
-            # Collect response text from AssistantMessage
-            response_text = ""
-            async for msg in client.receive_response():
-                msg_type = type(msg).__name__
-                if msg_type == "AssistantMessage" and hasattr(msg, "content"):
-                    for block in msg.content:
-                        block_type = type(block).__name__
-                        if block_type == "TextBlock" and hasattr(block, "text"):
-                            response_text += block.text
+            # Create a minimal client for simple text generation (no tools needed)
+            client = ClaudeSDKClient(
+                options=ClaudeAgentOptions(
+                    model="claude-haiku-4-5",
+                    system_prompt="You generate very short, concise terminal names (2-3 words MAX). Output ONLY the name, nothing else. No quotes, no explanation, no preamble. Keep it as short as possible while being descriptive.",
+                    max_turns=1,
+                )
+            )
 
-            if response_text:
-                # Clean up the result
-                name = response_text.strip()
-                # Remove any quotes
-                name = name.strip('"').strip("'")
-                # Take first line only
-                name = name.split('\\n')[0].strip()
-                if name:
-                    print(name)
-                    sys.exit(0)
+            async with client:
+                # Send the query
+                await client.query(prompt)
 
-        # If we get here, no valid response
-        sys.exit(1)
+                # Collect response text from AssistantMessage
+                response_text = ""
+                async for msg in client.receive_response():
+                    msg_type = type(msg).__name__
+                    if msg_type == "AssistantMessage" and hasattr(msg, "content"):
+                        for block in msg.content:
+                            block_type = type(block).__name__
+                            if block_type == "TextBlock" and hasattr(block, "text"):
+                                response_text += block.text
+
+                if response_text:
+                    # Clean up the result
+                    name = response_text.strip()
+                    # Remove any quotes
+                    name = name.strip('"').strip("'")
+                    # Take first line only
+                    name = name.split('\\n')[0].strip()
+                    if name:
+                        print(name)
+                        sys.exit(0)
+
+            # If we get here, no valid response
+            sys.exit(1)
 
     except ImportError as e:
         print(f"Import error: {e}", file=sys.stderr)

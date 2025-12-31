@@ -29,7 +29,7 @@ from ui import (
 )
 
 # Configuration
-DEFAULT_MODEL = "claude-opus-4-5-20251101"
+DEFAULT_MODEL = "glm-4.7"
 
 
 def setup_environment() -> Path:
@@ -117,24 +117,41 @@ def validate_environment(spec_dir: Path) -> bool:
     """
     valid = True
 
-    # Check for OAuth token (API keys are not supported)
-    if not get_auth_token():
-        print("Error: No OAuth token found")
-        print("\nAuto Claude requires Claude Code OAuth authentication.")
-        print("Direct API keys (ANTHROPIC_API_KEY) are not supported.")
-        print("\nTo authenticate, run:")
-        print("  claude setup-token")
-        valid = False
+    # Check AI provider - GLM doesn't need Claude OAuth
+    ai_provider = os.environ.get("AI_PROVIDER", "claude").lower()
+    
+    if ai_provider == "glm":
+        # GLM authentication check
+        if not os.environ.get("ZHIPUAI_API_KEY"):
+            print("Error: ZHIPUAI_API_KEY environment variable not set")
+            print("\nAuto Claude with GLM provider requires Zhipu AI API key.")
+            print("Get your key from: https://open.bigmodel.cn/")
+            valid = False
+        else:
+            print("Auth: ZHIPUAI_API_KEY")
+            # Show custom base URL if set
+            base_url = os.environ.get("GLM_BASE_URL")
+            if base_url:
+                print(f"API Endpoint: {base_url}")
     else:
-        # Show which auth source is being used
-        source = get_auth_token_source()
-        if source:
-            print(f"Auth: {source}")
+        # Claude authentication check
+        if not get_auth_token():
+            print("Error: No OAuth token found")
+            print("\nAuto Claude requires Claude Code OAuth authentication.")
+            print("Direct API keys (ANTHROPIC_API_KEY) are not supported.")
+            print("\nTo authenticate, run:")
+            print("  claude setup-token")
+            valid = False
+        else:
+            # Show which auth source is being used
+            source = get_auth_token_source()
+            if source:
+                print(f"Auth: {source}")
 
-        # Show custom base URL if set
-        base_url = os.environ.get("ANTHROPIC_BASE_URL")
-        if base_url:
-            print(f"API Endpoint: {base_url}")
+            # Show custom base URL if set
+            base_url = os.environ.get("ANTHROPIC_BASE_URL")
+            if base_url:
+                print(f"API Endpoint: {base_url}")
 
     # Check for spec.md in spec directory
     spec_file = spec_dir / "spec.md"

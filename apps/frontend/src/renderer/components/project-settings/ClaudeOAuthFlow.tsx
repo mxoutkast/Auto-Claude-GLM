@@ -125,15 +125,15 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
                 <Key className="h-6 w-6 text-info shrink-0 mt-0.5" />
                 <div className="flex-1 space-y-3">
                   <h3 className="text-lg font-medium text-foreground">
-                    Authenticate with Claude
+                    Configure AI Authentication
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Auto Claude requires Claude AI authentication for AI-powered features like
+                    Auto Claude requires GLM API authentication for AI-powered features like
                     Roadmap generation, Task automation, and Ideation.
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    This will open a browser window to authenticate with your Claude account.
-                    Your credentials are stored securely and are valid for 1 year.
+                    This will configure your API credentials.
+                    Your credentials are stored securely.
                   </p>
                 </div>
               </div>
@@ -143,7 +143,7 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
           <div className="flex justify-center">
             <Button onClick={handleStartAuth} size="lg" className="gap-2">
               <Key className="h-5 w-5" />
-              Authenticate with Claude
+              Configure AI Authentication
             </Button>
           </div>
         </div>
@@ -194,10 +194,10 @@ export function ClaudeOAuthFlow({ onSuccess, onCancel }: ClaudeOAuthFlowProps) {
               <CheckCircle2 className="h-6 w-6 text-success shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="text-lg font-medium text-success">
-                  Successfully Authenticated!
+                  Successfully Configured!
                 </h3>
                 <p className="text-sm text-success/80 mt-1">
-                  {email ? `Connected as ${email}` : 'Your Claude credentials have been saved'}
+                  {email ? `Connected as ${email}` : 'Your AI credentials have been saved'}
                 </p>
                 <div className="flex items-center gap-2 mt-3 text-xs text-success/70">
                   <Sparkles className="h-3 w-3" />

@@ -25,7 +25,9 @@ from __future__ import annotations
 from .ai_resolver import (
     AIResolver,
     ConflictContext,
+    create_ai_resolver,
     create_claude_resolver,
+    create_glm_resolver,
 )
 
 # For backwards compatibility, also expose the AICallFunction type
@@ -34,6 +36,8 @@ from .ai_resolver.resolver import AICallFunction
 __all__ = [
     "AIResolver",
     "ConflictContext",
+    "create_ai_resolver",
     "create_claude_resolver",
+    "create_glm_resolver",
     "AICallFunction",
 ]

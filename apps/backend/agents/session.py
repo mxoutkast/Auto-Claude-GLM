@@ -8,8 +8,11 @@ memory updates, recovery tracking, and Linear integration.
 
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from claude_agent_sdk import ClaudeSDKClient
+if TYPE_CHECKING:
+    from core.glm_client import GLMAgentClient
+
 from debug import debug, debug_detailed, debug_error, debug_section, debug_success
 from insight_extractor import extract_session_insights
 from linear_updater import (
@@ -311,7 +314,7 @@ async def post_session_processing(
 
 
 async def run_agent_session(
-    client: ClaudeSDKClient,
+    client: "ClaudeSDKClient",
     message: str,
     spec_dir: Path,
     verbose: bool = False,

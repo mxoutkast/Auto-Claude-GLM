@@ -5,7 +5,7 @@ Insight Extractor
 Automatically extracts structured insights from completed coding sessions.
 Runs after each session to capture rich, actionable knowledge for Graphiti memory.
 
-Uses the Claude Agent SDK (same as the rest of the system) for extraction.
+Uses the GLM Agent Client for extraction.
 Falls back to generic insights if extraction fails (never blocks the build).
 """
 
@@ -20,20 +20,12 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Check for Claude SDK availability
-try:
-    from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
-
-    SDK_AVAILABLE = True
-except ImportError:
-    SDK_AVAILABLE = False
-    ClaudeAgentOptions = None
-    ClaudeSDKClient = None
-
-from core.auth import ensure_claude_code_oauth_token, get_auth_token
+# Import GLM client
+from core.glm_client import GLMAgentClient
+from core.glm_options import GLMAgentOptions
 
 # Default model for insight extraction (fast and cheap)
-DEFAULT_EXTRACTION_MODEL = "claude-3-5-haiku-latest"
+DEFAULT_EXTRACTION_MODEL = "glm-4.5-air"
 
 # Maximum diff size to send to the LLM (avoid context limits)
 MAX_DIFF_CHARS = 15000
@@ -44,10 +36,8 @@ MAX_ATTEMPTS_TO_INCLUDE = 3
 
 def is_extraction_enabled() -> bool:
     """Check if insight extraction is enabled."""
-    # Extraction requires Claude SDK and authentication token
-    if not SDK_AVAILABLE:
-        return False
-    if not get_auth_token():
+    # Extraction requires GLM API key
+    if not os.environ.get("ZHIPUAI_API_KEY"):
         return False
     enabled_str = os.environ.get("INSIGHT_EXTRACTION_ENABLED", "true").lower()
     return enabled_str in ("true", "1", "yes")

@@ -25,9 +25,11 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+if TYPE_CHECKING:
+    from core.glm_client import GLMAgentClient
+    from core.glm_options import GLMAgentOptions
 
 # Linear status constants (matching Valma AI team setup)
 STATUS_TODO = "Todo"
@@ -108,29 +110,21 @@ def get_linear_api_key() -> str:
     return os.environ.get("LINEAR_API_KEY", "")
 
 
-def _create_linear_client() -> ClaudeSDKClient:
+def _create_linear_client() -> "GLMAgentClient":
     """
-    Create a minimal Claude client with only Linear MCP tools.
+    Create a minimal GLM client with only Linear MCP tools.
     Used for focused mini-agent calls.
     """
-    from core.auth import (
-        ensure_claude_code_oauth_token,
-        get_sdk_env_vars,
-        require_auth_token,
-    )
-
-    require_auth_token()  # Raises ValueError if no token found
-    ensure_claude_code_oauth_token()
+    from core.glm_client import GLMAgentClient
+    from core.glm_options import GLMAgentOptions
 
     linear_api_key = get_linear_api_key()
     if not linear_api_key:
         raise ValueError("LINEAR_API_KEY not set")
 
-    sdk_env = get_sdk_env_vars()
-
-    return ClaudeSDKClient(
-        options=ClaudeAgentOptions(
-            model="claude-haiku-4-5",  # Fast & cheap model for simple API calls
+    return GLMAgentClient(
+        options=GLMAgentOptions(
+            model="glm-4",  # Fast model for simple API calls
             system_prompt="You are a Linear API assistant. Execute the requested Linear operation precisely.",
             allowed_tools=LINEAR_TOOLS,
             mcp_servers={
@@ -141,7 +135,6 @@ def _create_linear_client() -> ClaudeSDKClient:
                 }
             },
             max_turns=10,  # Should complete in 1-3 turns
-            env=sdk_env,  # Pass ANTHROPIC_BASE_URL etc. to subprocess
         )
     )
 

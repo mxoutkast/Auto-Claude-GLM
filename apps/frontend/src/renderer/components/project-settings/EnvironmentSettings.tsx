@@ -80,7 +80,7 @@ export function EnvironmentSettings({
       >
         <div className="flex items-center gap-2">
           <Key className="h-4 w-4" />
-          Claude Authentication
+          AI Authentication
           {claudeAuthStatus === 'authenticated' && (
             <span className="px-2 py-0.5 text-xs bg-success/10 text-success rounded-full">
               Connected
@@ -117,9 +117,9 @@ export function EnvironmentSettings({
                       Using Global Authentication
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Claude authentication is managed in{' '}
+                      AI authentication is managed in{' '}
                       <span className="font-medium text-info">Settings → Integrations</span>.
-                      All projects share the same Claude accounts.
+                      All projects share the same AI accounts.
                     </p>
                   </div>
                 </div>
@@ -219,9 +219,9 @@ export function EnvironmentSettings({
                 <div className="rounded-lg border border-warning/30 bg-warning/5 p-4">
                   <div className="flex flex-col items-center text-center">
                     <Users className="h-8 w-8 text-warning mb-2" />
-                    <p className="text-sm font-medium text-foreground">No Claude Accounts Configured</p>
+                    <p className="text-sm font-medium text-foreground">No AI Accounts Configured</p>
                     <p className="text-xs text-muted-foreground mt-1 mb-3">
-                      Add a Claude account in the global settings to use Auto-Build.
+                      Add an AI account in the global settings to use Auto-Build.
                     </p>
                     <Button
                       size="sm"

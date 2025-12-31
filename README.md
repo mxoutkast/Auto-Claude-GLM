@@ -57,6 +57,7 @@
 ## Requirements
 
 - **Claude Pro/Max subscription** - [Get one here](https://claude.ai/upgrade)
+  - **OR GLM API key** - [100x cheaper alternative](./GLM_QUICKSTART.md) for simple tasks
 - **Claude Code CLI** - `npm install -g @anthropic-ai/claude-code`
 - **Git repository** - Your project must be initialized as a git repo
 - **Python 3.12+** - Required for the backend and Memory Layer
@@ -68,6 +69,7 @@
 1. **Download and install** the app for your platform
 2. **Open your project** - Select a git repository folder
 3. **Connect Claude** - The app will guide you through OAuth setup
+   - **Alternative:** [Use GLM](./GLM_QUICKSTART.md) for 100x cost savings
 4. **Create a task** - Describe what you want to build
 5. **Watch it work** - Agents plan, code, and validate autonomously
 
@@ -78,6 +80,7 @@
 | Feature | Description |
 |---------|-------------|
 | **Autonomous Tasks** | Describe your goal; agents handle planning, implementation, and validation |
+| **Multi-Provider Support** | Use Claude for complex tasks or GLM for 100x cost savings on simple operations |
 | **Parallel Execution** | Run multiple builds simultaneously with up to 12 agent terminals |
 | **Isolated Workspaces** | All changes happen in git worktrees - your main branch stays safe |
 | **Self-Validating QA** | Built-in quality assurance loop catches issues before you review |
@@ -106,7 +109,7 @@ AI-assisted feature planning with competitor analysis and audience targeting.
 ![Roadmap](.github/assets/Auto-Claude-roadmap.png)
 
 ### Additional Features
-- **Insights** - Chat interface for exploring your codebase
+- **Insights** - Chat interface powered by GLM-4.7 with thinking mode for deep codebase exploration ([Configuration Details](docs/INSIGHTS_GLM47_CONFIG.md))
 - **Ideation** - Discover improvements, performance issues, and vulnerabilities
 - **Changelog** - Generate release notes from completed tasks
 

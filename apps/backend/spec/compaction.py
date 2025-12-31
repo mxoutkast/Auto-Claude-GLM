@@ -16,13 +16,13 @@ from core.simple_client import create_simple_client
 async def summarize_phase_output(
     phase_name: str,
     phase_output: str,
-    model: str = "claude-sonnet-4-5-20250929",
+    model: str = "glm-4.7",
     target_words: int = 500,
 ) -> str:
     """
     Summarize phase output to a concise summary for subsequent phases.
 
-    Uses Sonnet for cost efficiency since this is a simple summarization task.
+    Uses GLM for cost efficiency since this is a simple summarization task.
 
     Args:
         phase_name: Name of the completed phase (e.g., 'discovery', 'requirements')

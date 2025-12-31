@@ -55,8 +55,8 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="claude-opus-4-5-20251101",
-        help="Model to use (default: claude-opus-4-5-20251101)",
+        default="glm-4.7",
+        help="Model to use (default: glm-4.7)",
     )
     parser.add_argument(
         "--thinking-level",

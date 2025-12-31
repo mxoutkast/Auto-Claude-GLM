@@ -168,11 +168,14 @@ export class AgentManager extends EventEmitter {
     specId: string,
     options: TaskExecutionOptions = {}
   ): void {
-    // Pre-flight auth check: Verify active profile has valid authentication
-    const profileManager = getClaudeProfileManager();
-    if (!profileManager.hasValidAuth()) {
-      this.emit('error', taskId, 'Claude authentication required. Please authenticate in Settings > Claude Profiles before starting tasks.');
-      return;
+    // Pre-flight auth check: Only check Claude auth if using Claude provider
+    const aiProvider = process.env.AI_PROVIDER || 'claude';
+    if (aiProvider === 'claude') {
+      const profileManager = getClaudeProfileManager();
+      if (!profileManager.hasValidAuth()) {
+        this.emit('error', taskId, 'Claude authentication required. Please authenticate in Settings > Claude Profiles before starting tasks.');
+        return;
+      }
     }
 
     const autoBuildSource = this.processManager.getAutoBuildSourcePath();

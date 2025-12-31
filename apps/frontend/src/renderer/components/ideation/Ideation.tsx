@@ -115,8 +115,8 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
           open={showEnvConfigModal}
           onOpenChange={setShowEnvConfigModal}
           onConfigured={handleEnvConfigured}
-          title="Claude Authentication Required"
-          description="A Claude Code OAuth token is required to generate AI-powered feature ideas."
+          title="GLM API Key Required"
+          description="A GLM API key is required to generate AI-powered feature ideas."
           projectId={projectId}
         />
       </>
@@ -239,8 +239,8 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
         open={showEnvConfigModal}
         onOpenChange={setShowEnvConfigModal}
         onConfigured={handleEnvConfigured}
-        title="Claude Authentication Required"
-        description="A Claude Code OAuth token is required to generate AI-powered feature ideas."
+        title="GLM API Key Required"
+        description="A GLM API key is required to generate AI-powered feature ideas."
         projectId={projectId}
       />
     </div>

@@ -129,7 +129,7 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
 
           alert(
             `Authenticating "${profileName}"...\n\n` +
-            `A browser window will open for you to log in with your Claude account.\n\n` +
+            `A browser window will open for you to log in with your AI account.\n\n` +
             `The authentication will be saved automatically once complete.`
           );
         } else {
@@ -204,7 +204,7 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
       if (initResult.success) {
         alert(
           `Authenticating profile...\n\n` +
-          `A browser window will open for you to log in with your Claude account.\n\n` +
+          `A browser window will open for you to log in with your AI account.\n\n` +
           `The authentication will be saved automatically once complete.`
         );
       } else {
@@ -298,7 +298,7 @@ export function IntegrationSettings({ settings, onSettingsChange, isOpen }: Inte
       description={t('integrations.description')}
     >
       <div className="space-y-6">
-        {/* Claude Accounts Section */}
+        {/* AI Accounts Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />

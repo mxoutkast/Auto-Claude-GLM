@@ -11,13 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-try:
-    from claude_agent_sdk import tool
-
-    SDK_TOOLS_AVAILABLE = True
-except ImportError:
-    SDK_TOOLS_AVAILABLE = False
-    tool = None
+from .decorators import tool
 
 
 def create_memory_tools(spec_dir: Path, project_dir: Path) -> list:
@@ -31,9 +25,6 @@ def create_memory_tools(spec_dir: Path, project_dir: Path) -> list:
     Returns:
         List of memory tool functions
     """
-    if not SDK_TOOLS_AVAILABLE:
-        return []
-
     tools = []
 
     # -------------------------------------------------------------------------

@@ -7,8 +7,11 @@ acceptance criteria.
 """
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from claude_agent_sdk import ClaudeSDKClient
+if TYPE_CHECKING:
+    from core.glm_client import GLMAgentClient
+
 from debug import debug, debug_detailed, debug_error, debug_section, debug_success
 from prompts_pkg import get_qa_reviewer_prompt
 from task_logger import (
@@ -25,7 +28,7 @@ from .criteria import get_qa_signoff_status
 
 
 async def run_qa_agent_session(
-    client: ClaudeSDKClient,
+    client: "GLMAgentClient",
     project_dir: Path,
     spec_dir: Path,
     qa_session: int,
@@ -37,7 +40,7 @@ async def run_qa_agent_session(
     Run a QA reviewer agent session.
 
     Args:
-        client: Claude SDK client
+        client: GLM Agent client
         project_dir: Project root directory (for capability detection)
         spec_dir: Spec directory
         qa_session: QA iteration number

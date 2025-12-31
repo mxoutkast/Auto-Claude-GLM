@@ -2,18 +2,14 @@
 Tool Registry
 =============
 
-Central registry for creating and managing auto-claude MCP tools.
+Central registry for creating and managing auto-claude custom tools.
+
+Note: With GLM integration, MCP tools are handled directly by the 
+glm_mcp.py module. This registry provides tool definitions that can
+be exposed via a custom MCP server if needed.
 """
 
 from pathlib import Path
-
-try:
-    from claude_agent_sdk import create_sdk_mcp_server
-
-    SDK_TOOLS_AVAILABLE = True
-except ImportError:
-    SDK_TOOLS_AVAILABLE = False
-    create_sdk_mcp_server = None
 
 from .tools import (
     create_memory_tools,
@@ -34,9 +30,6 @@ def create_all_tools(spec_dir: Path, project_dir: Path) -> list:
     Returns:
         List of all tool functions
     """
-    if not SDK_TOOLS_AVAILABLE:
-        return []
-
     all_tools = []
 
     # Create tools by category
@@ -52,21 +45,25 @@ def create_auto_claude_mcp_server(spec_dir: Path, project_dir: Path):
     """
     Create an MCP server with auto-claude custom tools.
 
+    Note: For GLM integration, custom tools are exposed via HTTP MCP server.
+    This function returns None as the auto-claude MCP server setup is 
+    handled differently with GLM.
+
     Args:
         spec_dir: Path to the spec directory
         project_dir: Path to the project root
 
     Returns:
-        MCP server instance, or None if SDK tools not available
+        None (GLM uses different MCP integration)
     """
-    if not SDK_TOOLS_AVAILABLE:
-        return None
-
-    tools = create_all_tools(spec_dir, project_dir)
-
-    return create_sdk_mcp_server(name="auto-claude", version="1.0.0", tools=tools)
+    # For GLM, we don't create an SDK-based MCP server
+    # MCP tools are handled via glm_mcp.py
+    return None
 
 
 def is_tools_available() -> bool:
-    """Check if SDK tools functionality is available."""
-    return SDK_TOOLS_AVAILABLE
+    """Check if custom tools functionality is available.
+    
+    Returns True since tools are always available with GLM.
+    """
+    return True

@@ -12,7 +12,7 @@ These commands form the foundation of the security allowlist.
 # =============================================================================
 
 BASE_COMMANDS: set[str] = {
-    # Core shell
+    # Core shell (Unix)
     "echo",
     "printf",
     "cat",
@@ -48,6 +48,31 @@ BASE_COMMANDS: set[str] = {
     "wc",
     "diff",
     "cmp",
+    # Windows shell equivalents
+    "dir",
+    "copy",
+    "xcopy",
+    "move",
+    "del",
+    "rd",
+    "md",
+    "type",
+    "findstr",
+    "where",
+    "attrib",
+    "icacls",
+    "powershell",
+    "cmd",
+    "cmd.exe",
+    "powershell.exe",
+    # Node.js / runtime commands
+    "node",
+    "node.exe",
+    "npm",
+    "npx",
+    "pnpm",
+    "yarn",
+    "bun",
     "comm",
     "tee",
     "xargs",

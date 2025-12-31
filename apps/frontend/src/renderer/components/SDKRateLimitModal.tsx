@@ -35,7 +35,7 @@ function getSourceName(source: SDKRateLimitInfo['source']): string {
     case 'roadmap': return 'Roadmap Generation';
     case 'ideation': return 'Ideation';
     case 'title-generator': return 'Title Generation';
-    default: return 'Claude Operation';
+    default: return 'AI Operation';
   }
 }
 
@@ -272,7 +272,7 @@ export function SDKRateLimitModal() {
                   The operation was stopped because {currentProfile?.name || 'your account'} reached its usage limit.
                   {hasMultipleProfiles
                     ? ' Switch to another account below to continue.'
-                    : ' Add another Claude account to continue working.'}
+                    : ' Add another AI account to continue working.'}
                 </p>
               </>
             )}
@@ -319,7 +319,7 @@ export function SDKRateLimitModal() {
                   {suggestedProfile ? (
                     <>Recommended: <strong>{suggestedProfile.name}</strong> has more capacity available.</>
                   ) : (
-                    'Switch to another Claude account and retry the operation:'
+                    'Switch to another AI account and retry the operation:'
                   )}
                 </p>
 
@@ -413,14 +413,14 @@ export function SDKRateLimitModal() {
               </>
             ) : (
               <p className="text-sm text-muted-foreground mb-3">
-                Add another Claude subscription to automatically switch when you hit rate limits.
+                Add another AI subscription to automatically switch when you hit rate limits.
               </p>
             )}
 
             {/* Add new account section */}
             <div className={hasMultipleProfiles ? "mt-4 pt-3 border-t border-border/50" : ""}>
               <p className="text-xs text-muted-foreground mb-2">
-                {hasMultipleProfiles ? 'Add another account:' : 'Connect a Claude account:'}
+                {hasMultipleProfiles ? 'Add another account:' : 'Connect an AI account:'}
               </p>
               <div className="flex items-center gap-2">
                 <Input
@@ -461,7 +461,7 @@ export function SDKRateLimitModal() {
               Upgrade for more usage
             </h4>
             <p className="text-sm text-muted-foreground mb-3">
-              Upgrade your Claude subscription for higher usage limits.
+              Upgrade your subscription for higher usage limits.
             </p>
             <Button
               variant="outline"
@@ -478,11 +478,11 @@ export function SDKRateLimitModal() {
           <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg p-3">
             <p className="font-medium mb-1">What happened:</p>
             <p>
-              The {sourceName.toLowerCase()} operation was stopped because your Claude account
+              The {sourceName.toLowerCase()} operation was stopped because your AI account
               ({currentProfile?.name || 'Default'}) reached its usage limit.
               {hasMultipleProfiles
                 ? ' You can switch to another account and retry, or add more accounts above.'
-                : ' Add another Claude account above to continue working, or wait for the limit to reset.'}
+                : ' Add another AI account above to continue working, or wait for the limit to reset.'}
             </p>
           </div>
         </div>

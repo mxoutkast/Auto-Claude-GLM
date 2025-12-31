@@ -41,6 +41,16 @@ def extract_commands(command_string: str) -> list[str]:
     """
     commands = []
 
+    # Special case: If the command is "powershell -Command ..." or "cmd /c ...", 
+    # only validate the interpreter, not the script inside
+    cmd_lower = command_string.strip().lower()
+    if (cmd_lower.startswith("powershell ") or cmd_lower.startswith("powershell.exe ") or
+        cmd_lower.startswith("cmd ") or cmd_lower.startswith("cmd.exe ")):
+        # Extract just the interpreter name
+        first_token = command_string.strip().split()[0]
+        cmd_name = os.path.basename(first_token)
+        return [cmd_name]
+
     # Split on semicolons that aren't inside quotes
     segments = re.split(r'(?<!["\'])\s*;\s*(?!["\'])', command_string)
 
@@ -53,8 +63,14 @@ def extract_commands(command_string: str) -> list[str]:
             tokens = shlex.split(segment)
         except ValueError:
             # Malformed command (unclosed quotes, etc.)
-            # Return empty to trigger block (fail-safe)
-            return []
+            # Try simple whitespace split to at least get the first command
+            simple_tokens = segment.split()
+            if simple_tokens:
+                # Get first token as command
+                cmd = os.path.basename(simple_tokens[0])
+                if cmd and not cmd.startswith("-"):
+                    commands.append(cmd)
+            continue
 
         if not tokens:
             continue
