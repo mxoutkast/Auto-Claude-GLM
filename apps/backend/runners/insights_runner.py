@@ -203,7 +203,7 @@ Current question: {message}"""
             
             # Create completion with GLM-4.6 using native SDK
             response = client.chat.completions.create(
-                model="glm-4.5",
+                model="glm-4.6",
                 messages=messages,
                 temperature=0.7,
                 stream=True
