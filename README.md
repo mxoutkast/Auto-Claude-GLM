@@ -1,6 +1,8 @@
-# Auto Claude
+# Auto Claude - GLM Edition
 
-**Autonomous multi-agent coding framework that plans, builds, and validates software for you.**
+**Autonomous multi-agent coding framework powered by GLM-4 - 100x cheaper than Claude, same quality.**
+
+> 🚀 **This is a complete GLM-first port** - See [GLM_PORT.md](./GLM_PORT.md) for migration details
 
 ![Auto Claude Kanban Board](.github/assets/Auto-Claude-Kanban.png)
 
@@ -56,11 +58,11 @@
 
 ## Requirements
 
-- **Claude Pro/Max subscription** - [Get one here](https://claude.ai/upgrade)
-  - **OR GLM API key** - [100x cheaper alternative](./GLM_QUICKSTART.md) for simple tasks
-- **Claude Code CLI** - `npm install -g @anthropic-ai/claude-code`
+- **GLM API Key** - [Get one from Z.AI](https://api.z.ai) - **100x cheaper than Claude** ($0.10 vs $15-75 per 1M tokens)
+  - **OR Claude Pro/Max** - [Fallback option](https://claude.ai/upgrade) for complex tasks
 - **Git repository** - Your project must be initialized as a git repo
 - **Python 3.12+** - Required for the backend and Memory Layer
+- **ZhipuAI SDK** - Installed automatically: `pip install zhipuai`
 
 ---
 
@@ -68,10 +70,20 @@
 
 1. **Download and install** the app for your platform
 2. **Open your project** - Select a git repository folder
-3. **Connect Claude** - The app will guide you through OAuth setup
-   - **Alternative:** [Use GLM](./GLM_QUICKSTART.md) for 100x cost savings
+3. **Configure GLM API** - Add your Z.AI API key in settings
+   - [Get API key from Z.AI](https://api.z.ai) - 100x cheaper than Claude
+   - **Fallback:** [Use Claude](https://claude.ai/upgrade) for maximum quality on complex tasks
 4. **Create a task** - Describe what you want to build
-5. **Watch it work** - Agents plan, code, and validate autonomously
+5. **Watch it work** - GLM-powered agents plan, code, and validate autonomously
+
+### GLM Setup (Recommended)
+```bash
+# Add to apps/backend/.env
+AI_PROVIDER=glm
+ZHIPUAI_API_KEY=your-api-key-here
+```
+
+See [GLM Quick Start Guide](./GLM_QUICKSTART.md) for detailed setup.
 
 ---
 
@@ -79,15 +91,17 @@
 
 | Feature | Description |
 |---------|-------------|
+| **GLM-Powered** | Uses GLM-4.7 by default - 100x cheaper than Claude with comparable quality |
+| **Multi-Provider** | Seamlessly switch between GLM (cost-effective) and Claude (premium) |
 | **Autonomous Tasks** | Describe your goal; agents handle planning, implementation, and validation |
-| **Multi-Provider Support** | Use Claude for complex tasks or GLM for 100x cost savings on simple operations |
 | **Parallel Execution** | Run multiple builds simultaneously with up to 12 agent terminals |
 | **Isolated Workspaces** | All changes happen in git worktrees - your main branch stays safe |
 | **Self-Validating QA** | Built-in quality assurance loop catches issues before you review |
-| **AI-Powered Merge** | Automatic conflict resolution when integrating back to main |
+| **AI-Powered Merge** | GLM-based automatic conflict resolution when integrating back to main |
 | **Memory Layer** | Agents retain insights across sessions for smarter builds |
 | **GitHub/GitLab Integration** | Import issues, investigate with AI, create merge requests |
 | **Linear Integration** | Sync tasks with Linear for team progress tracking |
+| **Insights Chat** | GLM-4.7 (tools) or GLM-4.6 (uncensored) modes available |
 | **Cross-Platform** | Native desktop apps for Windows, macOS, and Linux |
 | **Auto-Updates** | App updates automatically when new versions are released |
 

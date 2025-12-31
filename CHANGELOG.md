@@ -1,3 +1,128 @@
+## 2.8.0 - Complete GLM Port (GLM-First Edition)
+
+### 🚀 Major Changes - GLM-First Architecture
+
+**This is a complete architectural shift to prioritize GLM-4 models with 100x cost savings.**
+
+#### Core Changes
+- **Default AI Provider**: Changed from Claude to GLM across entire codebase
+- **Model Hierarchy**: GLM-4.7 (primary), GLM-4.6 (uncensored), GLM-4 (fast)
+- **Cost Optimization**: ~$0.10 per 1M tokens vs $15-75 for Claude Opus
+- **Native Integration**: ZhipuAI SDK + Z.AI OpenAI-compatible endpoint
+
+### 🔧 Backend Migration (25+ files)
+
+#### Runners
+- ✅ All runners now default to GLM (github, gitlab, roadmap, ideation, spec, insights)
+- ✅ Insights runner supports GLM-4.7 (with tools) and GLM-4.6 (uncensored) toggle
+- ✅ Maintained backwards compatibility with Claude via `AI_PROVIDER` env var
+
+#### Services & Integrations
+- ✅ Commit message service uses GLM
+- ✅ Workspace merge service uses GLM
+- ✅ Linear integration ported from ClaudeSDKClient to GLMAgentClient
+- ✅ Batch analyzer renamed to GLMBatchAnalyzer
+
+#### Merge AI Resolver
+- ✅ NEW: `glm_client.py` - Native GLM-based conflict resolver
+- ✅ Auto-provider selection via `create_ai_resolver()` based on AI_PROVIDER
+- ✅ Uses ZhipuAI SDK directly with `eni_prompt` for uncensored code merging
+
+#### Rate Limiter
+- ✅ Added GLM pricing tiers (glm-4, glm-4-plus, glm-4-air, glm-4-flash, glm-4-long)
+- ✅ Cost tracking for GLM models
+
+### 🎨 Frontend Migration (30+ files)
+
+#### Model Configuration
+- ✅ `AVAILABLE_MODELS` - GLM-4.7 and GLM-4.6 listed first
+- ✅ Claude models labeled as "(Legacy)"
+- ✅ `DEFAULT_AGENT_PROFILES` - GLM-4.7 is now the default profile
+- ✅ All phase models (spec, planning, coding, qa) default to GLM-4.7
+- ✅ All feature models (insights, ideation, roadmap, github) default to GLM-4.7
+
+#### User-Facing Labels (Complete Rebrand)
+All "Claude" references updated to "AI" or "GLM":
+- ✅ Authentication: "AI Authentication", "GLM API", "AI API Key Required"
+- ✅ Settings: "AI Accounts", "AI Auth", "Legacy CLI Path"
+- ✅ Components: Terminal title "GLM", usage "AI status", modals "AI Operation"
+- ✅ OAuth flows: "Configure AI Authentication", "AI accounts"
+- ✅ Rate limits: "AI account", "AI subscription"
+
+#### i18n Translations
+- ✅ English (`en/settings.json`) - All labels updated to AI/GLM terminology
+- ✅ French (`fr/settings.json`) - All labels updated to IA/GLM terminology
+- ✅ Maintained backwards compatibility for internal code keys
+
+#### Component Updates
+- Terminal.tsx, SDKRateLimitModal.tsx, UsageIndicator.tsx
+- ClaudeAuthSection.tsx, ClaudeOAuthFlow.tsx, EnvironmentSettings.tsx
+- SectionRouter.tsx, OAuthStep.tsx, IntegrationSettings.tsx
+- EnvConfigModal.tsx, Ideation.tsx, AgentProfileSelector.tsx
+- models.ts, i18n settings (en/fr)
+
+### 📊 Cost Comparison
+
+| Provider | Model | 1M Tokens | Savings |
+|----------|-------|-----------|---------|
+| **GLM** | glm-4.7 | **$0.10** | Baseline |
+| Claude | opus | $15-75 | **150-750x more** |
+| Claude | sonnet | $3-15 | **30-150x more** |
+| OpenAI | GPT-4 | $10-30 | **100-300x more** |
+
+### 🎯 Preserved Features
+
+All original Auto-Claude functionality works with GLM:
+- ✅ Autonomous task execution
+- ✅ Multi-phase builds (spec, planning, coding, QA)
+- ✅ Parallel execution (up to 12 terminals)
+- ✅ Isolated git worktrees
+- ✅ Self-validating QA loops
+- ✅ AI-powered merge resolution (now GLM-based)
+- ✅ Memory layer integration
+- ✅ GitHub/GitLab/Linear integrations
+- ✅ Roadmap & ideation generation
+- ✅ Insights chat with dual modes
+
+### 🔄 Backwards Compatibility
+
+- ✅ Claude profiles still available (labeled "Legacy")
+- ✅ Claude API configuration preserved
+- ✅ Switch providers via `AI_PROVIDER=claude` in .env
+- ✅ All internal code keys unchanged for data compatibility
+
+### 📚 New Documentation
+
+- [GLM_PORT.md](./GLM_PORT.md) - Complete migration details and technical specs
+- [GLM_QUICKSTART.md](./GLM_QUICKSTART.md) - Quick setup guide
+- [INSIGHTS_GLM47_CONFIG.md](./docs/INSIGHTS_GLM47_CONFIG.md) - GLM-4.7 configuration
+- [INSIGHTS_GLM47_QUICKREF.md](./docs/INSIGHTS_GLM47_QUICKREF.md) - Model parameters reference
+
+### 🚀 Getting Started with GLM
+
+```bash
+# Install ZhipuAI SDK
+pip install zhipuai
+
+# Configure environment
+echo "AI_PROVIDER=glm" >> apps/backend/.env
+echo "ZHIPUAI_API_KEY=your-key-here" >> apps/backend/.env
+
+# Run the app
+npm run dev
+```
+
+### 🌟 Why This Fork?
+
+1. **Cost**: 100-750x cheaper than Claude
+2. **Speed**: Comparable or faster response times
+3. **Quality**: Excellent for coding tasks
+4. **Uncensored**: GLM-4.6 mode available
+5. **No Subscription**: Pay-as-you-go pricing
+6. **Chinese Support**: Native Chinese language model
+
+---
+
 ## 2.7.1 - Build Pipeline Enhancements
 
 ### 🛠️ Improvements
