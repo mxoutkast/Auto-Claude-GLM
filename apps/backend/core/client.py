@@ -181,6 +181,16 @@ def create_client(
     # Build MCP server configurations
     mcp_servers = {}
     
+    # Vision MCP Server (added by Gemini)
+    vision_mcp_url = os.environ.get("VISION_MCP_URL")
+    if vision_mcp_url:
+        mcp_servers["vision"] = {
+            "type": "http",
+            "url": vision_mcp_url,
+            "headers": {"Authorization": f"Bearer {os.environ.get('VISION_API_KEY', '')}"}
+        }
+
+    
     if "context7" in required_servers:
         mcp_servers["context7"] = {
             "command": "npx",

@@ -41,7 +41,7 @@ def extract_commands(command_string: str) -> list[str]:
     """
     commands = []
 
-    # Special case: If the command is "powershell -Command ..." or "cmd /c ...", 
+    # Special case: If the command is "powershell -Command ...", "cmd /c ...", or "python -c ...",
     # only validate the interpreter, not the script inside
     cmd_lower = command_string.strip().lower()
     if (cmd_lower.startswith("powershell ") or cmd_lower.startswith("powershell.exe ") or
@@ -50,6 +50,14 @@ def extract_commands(command_string: str) -> list[str]:
         first_token = command_string.strip().split()[0]
         cmd_name = os.path.basename(first_token)
         return [cmd_name]
+    
+    # Special case for Python with -c flag: treat inline code as part of python command
+    if cmd_lower.startswith("python ") or cmd_lower.startswith("python3 ") or cmd_lower.startswith("python.exe "):
+        tokens = command_string.strip().split()
+        if len(tokens) >= 2 and tokens[1] == "-c":
+            # Only validate 'python', not the inline code
+            cmd_name = os.path.basename(tokens[0])
+            return [cmd_name]
 
     # Split on semicolons that aren't inside quotes
     segments = re.split(r'(?<!["\'])\s*;\s*(?!["\'])', command_string)
