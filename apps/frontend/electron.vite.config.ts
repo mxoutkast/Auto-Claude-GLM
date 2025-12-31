@@ -43,6 +43,9 @@ export default defineConfig({
         }
       }
     },
+    css: {
+      postcss: './postcss.config.cjs'
+    },
     plugins: [react()],
     resolve: {
       alias: {

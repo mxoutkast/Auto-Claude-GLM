@@ -91,7 +91,7 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
   const { settings } = useSettingsStore();
   const selectedProfile = DEFAULT_AGENT_PROFILES.find(
     p => p.id === settings.selectedAgentProfile
-  ) || DEFAULT_AGENT_PROFILES.find(p => p.id === 'auto')!;
+  ) || DEFAULT_AGENT_PROFILES.find(p => p.id === 'auto') || DEFAULT_AGENT_PROFILES[0];
 
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
@@ -125,16 +125,16 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
     }
     return settings.selectedAgentProfile || 'auto';
   });
-  const [model, setModel] = useState<ModelType | ''>(task.metadata?.model || selectedProfile.model);
+  const [model, setModel] = useState<ModelType | ''>(task.metadata?.model || selectedProfile?.model || '');
   const [thinkingLevel, setThinkingLevel] = useState<ThinkingLevel | ''>(
-    task.metadata?.thinkingLevel || selectedProfile.thinkingLevel
+    task.metadata?.thinkingLevel || selectedProfile?.thinkingLevel || ''
   );
   // Auto profile - per-phase configuration
   const [phaseModels, setPhaseModels] = useState<PhaseModelConfig | undefined>(
-    task.metadata?.phaseModels || selectedProfile.phaseModels || DEFAULT_PHASE_MODELS
+    task.metadata?.phaseModels || selectedProfile?.phaseModels || DEFAULT_PHASE_MODELS
   );
   const [phaseThinking, setPhaseThinking] = useState<PhaseThinkingConfig | undefined>(
-    task.metadata?.phaseThinking || selectedProfile.phaseThinking || DEFAULT_PHASE_THINKING
+    task.metadata?.phaseThinking || selectedProfile?.phaseThinking || DEFAULT_PHASE_THINKING
   );
 
   // Image attachments
@@ -168,8 +168,8 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
 
       if (isAutoProfile) {
         setProfileId('auto');
-        setModel(taskModel || selectedProfile.model);
-        setThinkingLevel(taskThinking || selectedProfile.thinkingLevel);
+        setModel(taskModel || selectedProfile?.model || '');
+        setThinkingLevel(taskThinking || selectedProfile?.thinkingLevel || '');
         setPhaseModels(task.metadata?.phaseModels || DEFAULT_PHASE_MODELS);
         setPhaseThinking(task.metadata?.phaseThinking || DEFAULT_PHASE_THINKING);
       } else if (taskModel && taskThinking) {
@@ -183,10 +183,10 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
         setPhaseThinking(DEFAULT_PHASE_THINKING);
       } else {
         setProfileId(settings.selectedAgentProfile || 'auto');
-        setModel(selectedProfile.model);
-        setThinkingLevel(selectedProfile.thinkingLevel);
-        setPhaseModels(selectedProfile.phaseModels || DEFAULT_PHASE_MODELS);
-        setPhaseThinking(selectedProfile.phaseThinking || DEFAULT_PHASE_THINKING);
+        setModel(selectedProfile?.model || '');
+        setThinkingLevel(selectedProfile?.thinkingLevel || '');
+        setPhaseModels(selectedProfile?.phaseModels || DEFAULT_PHASE_MODELS);
+        setPhaseThinking(selectedProfile?.phaseThinking || DEFAULT_PHASE_THINKING);
       }
 
       setImages(task.metadata?.attachedImages || []);
@@ -201,7 +201,7 @@ export function TaskEditDialog({ task, open, onOpenChange, onSaved }: TaskEditDi
       setShowImages((task.metadata?.attachedImages || []).length > 0);
       setPasteSuccess(false);
     }
-  }, [open, task, settings.selectedAgentProfile, selectedProfile.model, selectedProfile.thinkingLevel]);
+  }, [open, task, settings.selectedAgentProfile, selectedProfile?.model, selectedProfile?.thinkingLevel]);
 
   /**
    * Handle paste event for screenshot support
