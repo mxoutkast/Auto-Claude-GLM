@@ -252,7 +252,7 @@ AGENT_CONFIGS = {
         "tools": [],  # Text-only analysis
         "mcp_servers": [],
         "auto_claude_tools": [],
-        "thinking_default": "low",
+        "thinking_default": "high",  # FIX: Use high thinking (16384 tokens) for complex 3-way merges
     },
     "commit_message": {
         "tools": [],
