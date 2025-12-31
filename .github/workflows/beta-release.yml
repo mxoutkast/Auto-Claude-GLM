@@ -80,7 +80,7 @@ jobs:
         id: npm-cache
         run: echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ${{ steps.npm-cache.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -90,7 +90,7 @@ jobs:
         run: cd apps/frontend && npm ci
 
       - name: Cache bundled Python
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: apps/frontend/python-runtime
           key: python-bundle-${{ runner.os }}-x64-3.12.8
@@ -159,7 +159,7 @@ jobs:
         id: npm-cache
         run: echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ${{ steps.npm-cache.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -169,7 +169,7 @@ jobs:
         run: cd apps/frontend && npm ci
 
       - name: Cache bundled Python
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: apps/frontend/python-runtime
           key: python-bundle-${{ runner.os }}-arm64-3.12.8
@@ -238,7 +238,7 @@ jobs:
         shell: bash
         run: echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ${{ steps.npm-cache.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -248,7 +248,7 @@ jobs:
         run: cd apps/frontend && npm ci
 
       - name: Cache bundled Python
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: apps/frontend/python-runtime
           key: python-bundle-${{ runner.os }}-x64-3.12.8
@@ -294,7 +294,7 @@ jobs:
         id: npm-cache
         run: echo "dir=$(npm config get cache)" >> $GITHUB_OUTPUT
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ${{ steps.npm-cache.outputs.dir }}
           key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
@@ -304,7 +304,7 @@ jobs:
         run: cd apps/frontend && npm ci
 
       - name: Cache bundled Python
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: apps/frontend/python-runtime
           key: python-bundle-${{ runner.os }}-x64-3.12.8
