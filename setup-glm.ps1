@@ -8,7 +8,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Check if .env exists
-$envFile = "apps\backend\.env"
+$envFile = ".env"
 if (-not (Test-Path $envFile)) {
     Write-Host "Creating .env file..." -ForegroundColor Yellow
     New-Item -Path $envFile -ItemType File -Force | Out-Null
