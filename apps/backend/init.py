@@ -78,16 +78,25 @@ def init_auto_claude_dir(project_dir: Path) -> tuple[Path, bool]:
     dir_created = not auto_claude_dir.exists()
     auto_claude_dir.mkdir(parents=True, exist_ok=True)
 
-    # Ensure .auto-claude is in .gitignore (only on first creation)
+    # Entries to add to gitignore
+    # - .auto-claude/ contains specs, ideation data, insights, roadmap
+    # - .worktrees/ contains git worktrees for isolated task branches
+    gitignore_entries = [".auto-claude/", ".worktrees/"]
+
+    # Ensure entries are in .gitignore (only on first creation)
     gitignore_updated = False
     if dir_created:
-        gitignore_updated = ensure_gitignore_entry(project_dir, ".auto-claude/")
+        for entry in gitignore_entries:
+            if ensure_gitignore_entry(project_dir, entry):
+                gitignore_updated = True
     else:
         # Even if dir exists, check gitignore on first run
         # Use a marker file to track if we've already checked
         marker = auto_claude_dir / ".gitignore_checked"
         if not marker.exists():
-            gitignore_updated = ensure_gitignore_entry(project_dir, ".auto-claude/")
+            for entry in gitignore_entries:
+                if ensure_gitignore_entry(project_dir, entry):
+                    gitignore_updated = True
             marker.touch()
 
     return auto_claude_dir, gitignore_updated
