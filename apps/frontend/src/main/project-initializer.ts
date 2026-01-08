@@ -154,8 +154,10 @@ export function initializeGit(projectPath: string): InitializationResult {
 
 /**
  * Entries to add to .gitignore when initializing a project
+ * - .auto-claude/ contains specs, ideation data, insights, roadmap
+ * - .worktrees/ contains git worktrees for isolated task branches
  */
-const GITIGNORE_ENTRIES = ['.auto-claude/'];
+const GITIGNORE_ENTRIES = ['.auto-claude/', '.worktrees/'];
 
 /**
  * Ensure entries exist in the project's .gitignore file.
@@ -335,7 +337,8 @@ export function initializeProject(projectPath: string): InitializationResult {
 
 /**
  * Ensure all data directories exist in .auto-claude.
- * Useful if new directories are added in future versions.
+ * Also ensures gitignore entries are up to date.
+ * Useful if new directories or gitignore entries are added in future versions.
  */
 export function ensureDataDirectories(projectPath: string): InitializationResult {
   const dotAutoBuildPath = path.join(projectPath, '.auto-claude');
@@ -348,6 +351,7 @@ export function ensureDataDirectories(projectPath: string): InitializationResult
   }
 
   try {
+    // Ensure data directories exist
     for (const dataDir of DATA_DIRECTORIES) {
       const dirPath = path.join(dotAutoBuildPath, dataDir);
       if (!existsSync(dirPath)) {
@@ -356,6 +360,10 @@ export function ensureDataDirectories(projectPath: string): InitializationResult
         writeFileSync(path.join(dirPath, '.gitkeep'), '');
       }
     }
+
+    // Ensure gitignore entries are up to date (for existing projects)
+    ensureGitignoreEntries(projectPath, GITIGNORE_ENTRIES);
+
     return { success: true };
   } catch (error) {
     return {

@@ -37,7 +37,8 @@ export interface TaskAPI {
   ) => Promise<IPCResult>;
   updateTaskStatus: (
     taskId: string,
-    status: TaskStatus
+    status: TaskStatus,
+    options?: { force?: boolean }
   ) => Promise<IPCResult>;
   recoverStuckTask: (
     taskId: string,
@@ -66,6 +67,8 @@ export interface TaskAPI {
   onTaskExecutionProgress: (
     callback: (taskId: string, progress: import('../../shared/types').ExecutionProgress) => void
   ) => () => void;
+  onMergeProgress?: (callback: (event: unknown, data: { taskId: string; type: 'stdout' | 'stderr'; message: string; timestamp: number }) => void) => void;
+  offMergeProgress?: (callback: (event: unknown, data: { taskId: string; type: 'stdout' | 'stderr'; message: string; timestamp: number }) => void) => void;
 
   // Task Phase Logs
   getTaskLogs: (projectId: string, specId: string) => Promise<IPCResult<TaskLogs | null>>;
@@ -112,9 +115,10 @@ export const createTaskAPI = (): TaskAPI => ({
 
   updateTaskStatus: (
     taskId: string,
-    status: TaskStatus
+    status: TaskStatus,
+    options?: { force?: boolean }
   ): Promise<IPCResult> =>
-    ipcRenderer.invoke(IPC_CHANNELS.TASK_UPDATE_STATUS, taskId, status),
+    ipcRenderer.invoke(IPC_CHANNELS.TASK_UPDATE_STATUS, taskId, status, options),
 
   recoverStuckTask: (
     taskId: string,
@@ -238,6 +242,18 @@ export const createTaskAPI = (): TaskAPI => ({
     return () => {
       ipcRenderer.removeListener(IPC_CHANNELS.TASK_EXECUTION_PROGRESS, handler);
     };
+  },
+
+  onMergeProgress: (
+    callback: (event: unknown, data: { taskId: string; type: 'stdout' | 'stderr'; message: string; timestamp: number }) => void
+  ): void => {
+    ipcRenderer.on(IPC_CHANNELS.TASK_WORKTREE_MERGE_PROGRESS, callback);
+  },
+
+  offMergeProgress: (
+    callback: (event: unknown, data: { taskId: string; type: 'stdout' | 'stderr'; message: string; timestamp: number }) => void
+  ): void => {
+    ipcRenderer.removeListener(IPC_CHANNELS.TASK_WORKTREE_MERGE_PROGRESS, callback);
   },
 
   // Task Phase Logs

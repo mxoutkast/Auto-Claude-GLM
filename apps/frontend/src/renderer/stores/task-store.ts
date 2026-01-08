@@ -249,7 +249,14 @@ export async function submitReview(
   try {
     const result = await window.electronAPI.submitReview(taskId, approved, feedback);
     if (result.success) {
-      store.updateTaskStatus(taskId, approved ? 'done' : 'in_progress');
+      if (approved) {
+        store.updateTaskStatus(taskId, 'done');
+      } else {
+        // Rejected - update status and restart the AI task
+        store.updateTaskStatus(taskId, 'in_progress');
+        // Actually restart the AI execution with the feedback
+        startTask(taskId);
+      }
       return true;
     }
     return false;
@@ -260,10 +267,12 @@ export async function submitReview(
 
 /**
  * Update task status and persist to file
+ * @param options.force - If true, bypass worktree check (for explicit "Mark Done" action)
  */
 export async function persistTaskStatus(
   taskId: string,
-  status: TaskStatus
+  status: TaskStatus,
+  options?: { force?: boolean }
 ): Promise<boolean> {
   const store = useTaskStore.getState();
 
@@ -272,7 +281,7 @@ export async function persistTaskStatus(
     store.updateTaskStatus(taskId, status);
 
     // Persist to file
-    const result = await window.electronAPI.updateTaskStatus(taskId, status);
+    const result = await window.electronAPI.updateTaskStatus(taskId, status, options);
     if (!result.success) {
       console.error('Failed to persist task status:', result.error);
       return false;

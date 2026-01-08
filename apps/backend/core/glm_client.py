@@ -262,7 +262,19 @@ class GLMAgentClient:
             kwargs["response_format"] = self.options.output_format
         
         try:
-            response = await self.client.chat.completions.create(**kwargs)
+            # Add 2-minute timeout to prevent indefinite hanging
+            # This is especially important for merge operations where the prompt can be very large
+            API_TIMEOUT_SECONDS = 120
+            try:
+                response = await asyncio.wait_for(
+                    self.client.chat.completions.create(**kwargs),
+                    timeout=API_TIMEOUT_SECONDS
+                )
+            except asyncio.TimeoutError:
+                error_msg = f"GLM API call timed out after {API_TIMEOUT_SECONDS} seconds. The prompt may be too large or the server may be overloaded."
+                logger.error(error_msg)
+                print(f"[AI-MERGE] ❌ {error_msg}", flush=True)
+                raise TimeoutError(error_msg)
             
             # Add assistant response to history
             choice = response.choices[0]

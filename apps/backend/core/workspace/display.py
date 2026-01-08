@@ -162,12 +162,25 @@ def print_conflict_info(result: dict) -> None:
             f"  {len(conflicts)} file{'s' if len(conflicts) != 1 else ''} had conflicts:"
         )
     )
-    for conflict_file in conflicts:
-        print(f"    {highlight(conflict_file)}")
+    
+    # Extract file names from conflict dicts (conflicts can be dicts or strings)
+    conflict_files = []
+    for conflict in conflicts:
+        if isinstance(conflict, dict):
+            file_name = conflict.get('file', str(conflict))
+            reason = conflict.get('reason', '')
+            print(f"    {highlight(file_name)}")
+            if reason:
+                print(f"      {muted(reason)}")
+            conflict_files.append(file_name)
+        else:
+            print(f"    {highlight(conflict)}")
+            conflict_files.append(conflict)
+    
     print()
     print(muted("  These files have conflict markers (<<<<<<< =======  >>>>>>>)"))
     print(muted("  Review and resolve them, then run:"))
-    print(f"    git add {' '.join(conflicts)}")
+    print(f"    git add {' '.join(conflict_files)}")
     print("    git commit")
     print()
 

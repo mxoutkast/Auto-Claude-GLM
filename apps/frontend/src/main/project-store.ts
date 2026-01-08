@@ -4,7 +4,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import type { Project, ProjectSettings, Task, TaskStatus, TaskMetadata, ImplementationPlan, ReviewReason, PlanSubtask } from '../shared/types';
 import { DEFAULT_PROJECT_SETTINGS, AUTO_BUILD_PATHS, getSpecsDir } from '../shared/constants';
-import { getAutoBuildPath, isInitialized } from './project-initializer';
+import { getAutoBuildPath, isInitialized, ensureDataDirectories } from './project-initializer';
 
 interface TabState {
   openProjectIds: string[];
@@ -171,6 +171,7 @@ export class ProjectStore {
 
   /**
    * Validate all projects to ensure their .auto-claude folders still exist.
+   * Also ensures gitignore entries and data directories are up to date.
    * If a project has autoBuildPath set but the folder was deleted,
    * reset autoBuildPath to empty string so the UI prompts for reinitialization.
    *
@@ -199,6 +200,14 @@ export class ProjectStore {
         project.updatedAt = new Date();
         resetProjectIds.push(project.id);
         hasChanges = true;
+      } else {
+        // Project is initialized - ensure data directories and gitignore are up to date
+        // This ensures new entries (like .worktrees/) get added to existing projects
+        try {
+          ensureDataDirectories(project.path);
+        } catch (error) {
+          console.error(`[ProjectStore] Failed to ensure data directories for ${project.name}:`, error);
+        }
       }
     }
 

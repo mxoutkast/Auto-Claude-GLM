@@ -31,6 +31,29 @@ LOCK_FILES = {
     "go.sum",
 }
 
+# Development artifacts that should NOT be merged into main
+# These are temporary files created during task development
+EXCLUDED_PATTERNS = [
+    # Completion reports and summaries
+    "_COMPLETION_REPORT.md",
+    "_SUMMARY.md",
+    "IMPLEMENTATION_SUMMARY.md",
+    "EDGE_CASE_IMPLEMENTATION_SUMMARY.md",
+    
+    # Manual testing files
+    "MANUAL_TESTING_CHECKLIST.md",
+    "MANUAL_TESTING_REPORT.md",
+    "MANUAL_EDGE_CASE_TEST.md",
+    "CLI_GUI_COMPARISON_REPORT.md",
+    
+    # Temporary test scripts (not in tests/ directory)
+    "test_manual",  # Directory
+    "run_manual_tests.py",
+    "create_test_files.py",
+    "create_minimal_docx.py",
+    "create_valid_test_files.py",
+]
+
 BINARY_EXTENSIONS = {
     ".png",
     ".jpg",
@@ -321,6 +344,36 @@ def is_lock_file(file_path: str) -> bool:
     return Path(file_path).name in LOCK_FILES
 
 
+def is_development_artifact(file_path: str) -> bool:
+    """
+    Check if a file is a development artifact that shouldn't be merged.
+    
+    Development artifacts include:
+    - Completion reports (SUBTASK_*_COMPLETION_REPORT.md)
+    - Manual testing files and scripts
+    - Temporary test data directories
+    
+    These files are useful during development but should stay in the
+    worktree/specs folder, not be merged into main.
+    """
+    file_name = Path(file_path).name
+    
+    # Check exact matches
+    if file_name in EXCLUDED_PATTERNS:
+        return True
+    
+    # Check if it's in test_manual directory
+    if "test_manual/" in file_path or file_path.startswith("test_manual/"):
+        return True
+    
+    # Check pattern matches (e.g., SUBTASK_*_COMPLETION_REPORT.md)
+    for pattern in EXCLUDED_PATTERNS:
+        if pattern in file_name:
+            return True
+    
+    return False
+
+
 def validate_merged_syntax(
     file_path: str, content: str, project_dir: Path
 ) -> tuple[bool, str]:
@@ -513,6 +566,7 @@ def create_conflict_file_with_git(
 _is_process_running = is_process_running
 _is_binary_file = is_binary_file
 _is_lock_file = is_lock_file
+_is_development_artifact = is_development_artifact
 _validate_merged_syntax = validate_merged_syntax
 _get_file_content_from_ref = get_file_content_from_ref
 _get_changed_files_from_branch = get_changed_files_from_branch

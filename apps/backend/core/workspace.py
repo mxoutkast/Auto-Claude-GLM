@@ -100,6 +100,9 @@ from core.workspace.git_utils import (
     is_lock_file as _is_lock_file,
 )
 from core.workspace.git_utils import (
+    is_development_artifact as _is_development_artifact,
+)
+from core.workspace.git_utils import (
     validate_merged_syntax as _validate_merged_syntax,
 )
 
@@ -765,9 +768,18 @@ def _resolve_git_conflicts_with_ai(
     changed_files = _get_changed_files_from_branch(
         project_dir, base_branch, spec_branch
     )
-    new_files = [
-        (f, s) for f, s in changed_files if s == "A" and f not in conflicting_files
-    ]
+    
+    # Filter out development artifacts from new files
+    development_artifacts_excluded: list[str] = []
+    new_files = []
+    for f, s in changed_files:
+        if s == "A" and f not in conflicting_files:
+            # Skip development artifacts (completion reports, temp test files, etc.)
+            if _is_development_artifact(f):
+                development_artifacts_excluded.append(f)
+                debug(MODULE, f"Excluding development artifact from merge: {f}")
+            else:
+                new_files.append((f, s))
 
     if new_files:
         print(muted(f"  Copying {len(new_files)} new file(s) first (dependencies)..."))
@@ -797,6 +809,15 @@ def _resolve_git_conflicts_with_ai(
                         debug(MODULE, f"Copied new file: {file_path}")
             except Exception as e:
                 debug_warning(MODULE, f"Could not copy new file {file_path}: {e}")
+    
+    # Notify about excluded development artifacts
+    if development_artifacts_excluded:
+        print()
+        print(muted(f"  ℹ Excluded {len(development_artifacts_excluded)} development artifact(s):"))
+        for artifact in development_artifacts_excluded[:5]:  # Show first 5
+            print(muted(f"    - {artifact}"))
+        if len(development_artifacts_excluded) > 5:
+            print(muted(f"    ... and {len(development_artifacts_excluded) - 5} more"))
 
     # Categorize conflicting files for processing
     files_needing_ai_merge: list[ParallelMergeTask] = []
@@ -1296,15 +1317,22 @@ def _build_merge_prompt(
     worktree_content: str,
     spec_name: str,
 ) -> str:
-    """Build the prompt for AI file merge."""
+    """Build the prompt for AI file merge.
+    
+    OPTIMIZATION: Keep prompts small for faster AI response.
+    - 10KB limit per file (down from 50KB)
+    - Direct, minimal instructions
+    """
     language = _infer_language_from_path(file_path)
-
+    
+    # OPTIMIZATION: Reduced truncation limits for faster AI response
+    # Large prompts cause API timeouts
+    MAX_CONTENT_SIZE = 10000  # 10KB per file
+    
     base_section = ""
     if base_content:
-        # FIX: Increased truncation limits to preserve more context for intelligent merging
-        # Old limits (10k/15k) were too low for complex files
-        if len(base_content) > 50000:
-            base_content = base_content[:50000] + "\n... (truncated)"
+        if len(base_content) > MAX_CONTENT_SIZE:
+            base_content = base_content[:MAX_CONTENT_SIZE] + "\n... (truncated)"
         base_section = f"""
 BASE (common ancestor):
 ```{language}
@@ -1312,27 +1340,25 @@ BASE (common ancestor):
 ```
 """
 
-    # FIX: Increased truncation limits to preserve more context for intelligent merging
-    # Old limits (10k/15k) were too low for complex files
-    if len(main_content) > 50000:
-        main_content = main_content[:50000] + "\n... (truncated)"
-    if len(worktree_content) > 50000:
-        worktree_content = worktree_content[:50000] + "\n... (truncated)"
+    if len(main_content) > MAX_CONTENT_SIZE:
+        main_content = main_content[:MAX_CONTENT_SIZE] + "\n... (truncated)"
+    if len(worktree_content) > MAX_CONTENT_SIZE:
+        worktree_content = worktree_content[:MAX_CONTENT_SIZE] + "\n... (truncated)"
 
-    prompt = f"""Perform a 3-way merge for file: {file_path}
-Task being merged: {spec_name}
+    # OPTIMIZATION: Simplified prompt for faster response
+    prompt = f"""Merge file: {file_path}
 {base_section}
-OURS (current main branch):
+MAIN:
 ```{language}
 {main_content}
 ```
 
-THEIRS (changes from task worktree):
+CHANGES:
 ```{language}
 {worktree_content}
 ```
 
-Merge these versions, preserving all meaningful changes from both. Output only the merged file content, no explanations."""
+Output ONLY the merged file. No explanations."""
 
     return prompt
 
@@ -1375,6 +1401,7 @@ async def _merge_file_with_ai_async(
 
             if success and merged is not None:
                 debug(MODULE, f"Auto-merged {task.file_path} without AI")
+                print(f"[AI-MERGE] ✓ Auto-merged {task.file_path} (no AI needed)", flush=True)
                 return ParallelMergeResult(
                     file_path=task.file_path,
                     merged_content=merged,
@@ -1384,24 +1411,25 @@ async def _merge_file_with_ai_async(
 
             # Need AI merge
             debug(MODULE, f"Using AI to merge {task.file_path}")
+            print(f"[AI-MERGE] → Using AI to merge {task.file_path}...", flush=True)
 
-            # Import auth utilities
-            from core.auth import ensure_claude_code_oauth_token, get_auth_token
-
-            if not get_auth_token():
+            # Check for GLM API key (required for AI merge)
+            import os
+            api_key = os.environ.get("ZHIPUAI_API_KEY")
+            print(f"[AI-MERGE] API key present: {bool(api_key)}, length: {len(api_key) if api_key else 0}", flush=True)
+            if not api_key:
                 debug_error(
                     MODULE,
-                    "AUTHENTICATION FAILED - No token available for AI merge",
+                    "AUTHENTICATION FAILED - ZHIPUAI_API_KEY not set for AI merge",
                     file_path=task.file_path,
                 )
+                print(f"[AI-MERGE] ✗ ZHIPUAI_API_KEY not set!", flush=True)
                 return ParallelMergeResult(
                     file_path=task.file_path,
                     merged_content=None,
                     success=False,
-                    error="No authentication token available",
+                    error="ZHIPUAI_API_KEY not set - add it to your .env file",
                 )
-
-            ensure_claude_code_oauth_token()
 
             # Build prompt
             prompt = _build_merge_prompt(
@@ -1411,6 +1439,10 @@ async def _merge_file_with_ai_async(
                 task.worktree_content,
                 task.spec_name,
             )
+            
+            # Log prompt size for debugging
+            prompt_kb = len(prompt) / 1024
+            print(f"[AI-MERGE] 📝 Prompt size: {prompt_kb:.1f}KB for {task.file_path}", flush=True)
 
             # Call Claude Haiku for fast merge
             try:
@@ -1485,6 +1517,7 @@ async def _merge_file_with_ai_async(
 
                 # DIAGNOSTIC: Log message stream
                 message_count = 0
+                print(f"[AI-MERGE] 🤖 AI is thinking about {task.file_path}...", flush=True)
                 async for msg in client.receive_response():
                     msg_type = type(msg).__name__
                     response_messages.append(msg_type)
@@ -1492,6 +1525,8 @@ async def _merge_file_with_ai_async(
                     if msg_type == "AssistantMessage" and hasattr(msg, "content"):
                         for block in msg.content:
                             if hasattr(block, "text"):
+                                # Print AI's actual response text for user visibility
+                                print(f"[AI-MERGE] 💭 AI: {block.text}", flush=True)
                                 response_text += block.text
                                 debug_verbose(
                                     MODULE,
@@ -1562,6 +1597,30 @@ async def _merge_file_with_ai_async(
                         success=False,
                         error=f"AI returned explanation instead of code: {first_line[:80]}...",
                     )
+
+                # VALIDATION: Check for truncation markers in AI output
+                # This catches cases where AI outputs the truncated input content
+                truncation_markers = [
+                    "... (truncated)",
+                    "...(truncated)",
+                    "# ... (truncated)",
+                    "// ... (truncated)",
+                ]
+                for marker in truncation_markers:
+                    if marker in merged_content:
+                        print(f"[AI-MERGE] ❌ REJECTED: AI output contains truncation marker", flush=True)
+                        debug_error(
+                            MODULE,
+                            f"TRUNCATION MARKER DETECTED in AI output for {task.file_path}",
+                            marker_found=marker,
+                            content_preview=merged_content[:500] if merged_content else "EMPTY",
+                        )
+                        return ParallelMergeResult(
+                            file_path=task.file_path,
+                            merged_content=None,
+                            success=False,
+                            error=f"AI output contains truncation marker - file too large for AI merge, needs manual resolution",
+                        )
 
                 # VALIDATION: Run syntax check on the merged content
                 is_valid, syntax_error = _validate_merged_syntax(

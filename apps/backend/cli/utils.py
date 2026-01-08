@@ -43,11 +43,19 @@ def setup_environment() -> Path:
     script_dir = Path(__file__).parent.parent.resolve()
     sys.path.insert(0, str(script_dir))
 
-    # Load .env file from project root - check both project root and dev/auto-claude/ locations
-    env_file = script_dir.parent / ".env"
+    # Load .env file - check multiple possible locations:
+    # 1. PROJECT_ROOT/.env (when running as installed package, e.g., D:\Auto-Claude-GLM\.env)
+    # 2. apps/.env (when running from apps/backend/)
+    # 3. dev/auto-claude/.env (legacy location)
+    # script_dir = apps/backend, so script_dir.parent = apps, script_dir.parent.parent = project_root
+    project_root_env = script_dir.parent.parent / ".env"  # D:\Auto-Claude-GLM\.env
+    apps_env_file = script_dir.parent / ".env"  # D:\Auto-Claude-GLM\apps\.env
     dev_env_file = script_dir.parent.parent / "dev" / "auto-claude" / ".env"
-    if env_file.exists():
-        load_dotenv(env_file)
+    
+    if project_root_env.exists():
+        load_dotenv(project_root_env)
+    elif apps_env_file.exists():
+        load_dotenv(apps_env_file)
     elif dev_env_file.exists():
         load_dotenv(dev_env_file)
 

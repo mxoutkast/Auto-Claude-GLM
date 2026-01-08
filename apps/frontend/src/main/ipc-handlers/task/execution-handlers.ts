@@ -324,7 +324,8 @@ export function registerTaskExecutionHandlers(
     async (
       _,
       taskId: string,
-      status: TaskStatus
+      status: TaskStatus,
+      options?: { force?: boolean }
     ): Promise<IPCResult> => {
       // Find task and project first (needed for worktree check)
       const { task, project } = findTaskAndProject(taskId);
@@ -334,19 +335,24 @@ export function registerTaskExecutionHandlers(
       }
 
       // Validate status transition - 'done' can only be set through merge handler
-      // UNLESS there's no worktree (limbo state - already merged/discarded or failed)
+      // UNLESS:
+      // 1. There's no worktree (limbo state - already merged/discarded or failed)
+      // 2. The force flag is set (explicit user action like "Mark Done" button)
       if (status === 'done') {
         // Check if worktree exists
         const worktreePath = path.join(project.path, '.worktrees', taskId);
         const hasWorktree = existsSync(worktreePath);
 
-        if (hasWorktree) {
-          // Worktree exists - must use merge workflow
+        if (hasWorktree && !options?.force) {
+          // Worktree exists and not forced - must use merge workflow
           console.warn(`[TASK_UPDATE_STATUS] Blocked attempt to set status 'done' directly for task ${taskId}. Use merge workflow instead.`);
           return {
             success: false,
             error: "Cannot set status to 'done' directly. Complete the human review and merge the worktree changes instead."
           };
+        } else if (hasWorktree && options?.force) {
+          // Worktree exists but forced - allow marking as done (explicit user action)
+          console.log(`[TASK_UPDATE_STATUS] Force-allowing status 'done' for task ${taskId} (user explicitly marked as done)`);
         } else {
           // No worktree - allow marking as done (limbo state recovery)
           console.log(`[TASK_UPDATE_STATUS] Allowing status 'done' for task ${taskId} (no worktree found - limbo state)`);
@@ -405,9 +411,9 @@ export function registerTaskExecutionHandlers(
           // Also store mapped version for Python compatibility
           plan.planStatus = status === 'in_progress' ? 'in_progress'
             : status === 'ai_review' ? 'review'
-            : status === 'human_review' ? 'review'
-            : status === 'done' ? 'completed'
-            : 'pending';
+              : status === 'human_review' ? 'review'
+                : status === 'done' ? 'completed'
+                  : 'pending';
           plan.updated_at = new Date().toISOString();
 
           writeFileSync(planPath, JSON.stringify(plan, null, 2));
@@ -421,9 +427,9 @@ export function registerTaskExecutionHandlers(
             status: status, // Store exact UI status for persistence
             planStatus: status === 'in_progress' ? 'in_progress'
               : status === 'ai_review' ? 'review'
-              : status === 'human_review' ? 'review'
-              : status === 'done' ? 'completed'
-              : 'pending',
+                : status === 'human_review' ? 'review'
+                  : status === 'done' ? 'completed'
+                    : 'pending',
             phases: []
           };
 
@@ -640,9 +646,9 @@ export function registerTaskExecutionHandlers(
           plan.status = newStatus;
           plan.planStatus = newStatus === 'done' ? 'completed'
             : newStatus === 'in_progress' ? 'in_progress'
-            : newStatus === 'ai_review' ? 'review'
-            : newStatus === 'human_review' ? 'review'
-            : 'pending';
+              : newStatus === 'ai_review' ? 'review'
+                : newStatus === 'human_review' ? 'review'
+                  : 'pending';
           plan.updated_at = new Date().toISOString();
 
           // Add recovery note

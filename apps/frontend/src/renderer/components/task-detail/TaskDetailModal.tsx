@@ -29,7 +29,8 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { calculateProgress } from '../../lib/utils';
-import { startTask, stopTask, submitReview, recoverStuckTask, deleteTask } from '../../stores/task-store';
+import { startTask, stopTask, submitReview, recoverStuckTask, deleteTask, persistTaskStatus } from '../../stores/task-store';
+import { ArrowRight } from 'lucide-react';
 import { TASK_STATUS_LABELS } from '../../../shared/constants';
 import { TaskEditDialog } from '../TaskEditDialog';
 import { useTaskDetail } from './hooks/useTaskDetail';
@@ -91,6 +92,16 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
     state.setIsRecovering(false);
   };
 
+  const handleForceHumanReview = async () => {
+    // Force transition from ai_review to human_review
+    state.setIsRecovering(true);
+    const success = await persistTaskStatus(task.id, 'human_review');
+    if (success) {
+      state.setIsStuck(false);
+    }
+    state.setIsRecovering(false);
+  };
+
   const handleReject = async () => {
     if (!state.feedback.trim()) {
       return;
@@ -115,10 +126,14 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
   };
 
   const handleMerge = async () => {
+    console.log('[handleMerge] Starting merge for task:', task.id);
+    console.log('[handleMerge] Options:', { noCommit: state.stageOnly });
     state.setIsMerging(true);
     state.setWorkspaceError(null);
     try {
+      console.log('[handleMerge] Calling mergeWorktree IPC...');
       const result = await window.electronAPI.mergeWorktree(task.id, { noCommit: state.stageOnly });
+      console.log('[handleMerge] Merge result:', JSON.stringify(result, null, 2));
       if (result.success && result.data?.success) {
         if (state.stageOnly && result.data.staged) {
           state.setWorkspaceError(null);
@@ -129,11 +144,15 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
           onOpenChange(false);
         }
       } else {
-        state.setWorkspaceError(result.data?.message || result.error || 'Failed to merge changes');
+        const errorMsg = result.data?.message || result.error || 'Failed to merge changes';
+        console.error('[handleMerge] Merge failed:', errorMsg);
+        state.setWorkspaceError(errorMsg);
       }
     } catch (error) {
+      console.error('[handleMerge] Exception during merge:', error);
       state.setWorkspaceError(error instanceof Error ? error.message : 'Unknown error during merge');
     } finally {
+      console.log('[handleMerge] Merge complete, setting isMerging to false');
       state.setIsMerging(false);
     }
   };
@@ -209,11 +228,55 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
       );
     }
 
+    // AI Review state - show options if stuck, or status if running
+    if (task.status === 'ai_review') {
+      if (state.isStuck) {
+        return (
+          <div className="flex items-center gap-2">
+            <Button variant="warning" onClick={handleRecover} disabled={state.isRecovering}>
+              {state.isRecovering ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Recovering...
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Retry AI Review
+                </>
+              )}
+            </Button>
+            <Button variant="outline" onClick={handleForceHumanReview} disabled={state.isRecovering}>
+              <ArrowRight className="mr-2 h-4 w-4" />
+              Skip to Human Review
+            </Button>
+          </div>
+        );
+      }
+      return (
+        <div className="text-sm flex items-center gap-2 text-info">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>AI Review in progress...</span>
+        </div>
+      );
+    }
+
     if (task.status === 'done') {
       return (
-        <div className="completion-state text-sm flex items-center gap-2 text-success">
-          <CheckCircle2 className="h-5 w-5" />
-          <span className="font-medium">Task completed</span>
+        <div className="flex items-center gap-3">
+          <div className="completion-state text-sm flex items-center gap-2 text-success">
+            <CheckCircle2 className="h-5 w-5" />
+            <span className="font-medium">Task completed</span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleForceHumanReview}
+            disabled={state.isRecovering}
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Review & Merge
+          </Button>
         </div>
       );
     }
@@ -287,8 +350,8 @@ function TaskDetailModalContent({ open, task, onOpenChange, onSwitchToTerminals,
                               className="text-xs"
                             >
                               {task.reviewReason === 'completed' ? 'Completed' :
-                               task.reviewReason === 'errors' ? 'Has Errors' :
-                               task.reviewReason === 'plan_review' ? 'Approve Plan' : 'QA Issues'}
+                                task.reviewReason === 'errors' ? 'Has Errors' :
+                                  task.reviewReason === 'plan_review' ? 'Approve Plan' : 'QA Issues'}
                             </Badge>
                           )}
                         </>

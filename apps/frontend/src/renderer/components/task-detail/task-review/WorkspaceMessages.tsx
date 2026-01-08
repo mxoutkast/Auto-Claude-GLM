@@ -38,7 +38,7 @@ export function NoWorkspaceMessage({ task, onClose }: NoWorkspaceMessageProps) {
 
     setIsMarkingDone(true);
     try {
-      await persistTaskStatus(task.id, 'done');
+      await persistTaskStatus(task.id, 'done', { force: true });
       // Auto-close modal after marking as done
       onClose?.();
     } catch (err) {
@@ -111,8 +111,8 @@ export function StagedInProjectMessage({ task, projectPath, hasWorktree = false,
         return;
       }
 
-      // Mark task as done
-      await persistTaskStatus(task.id, 'done');
+      // Mark task as done (use force to bypass worktree check since we just deleted it)
+      await persistTaskStatus(task.id, 'done', { force: true });
 
       // Auto-close modal after marking as done
       onClose?.();

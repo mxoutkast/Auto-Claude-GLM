@@ -1484,30 +1484,13 @@ export function registerWorktreeHandlers(
                 }, 5000);
               }
 
-              // Check if merge might have succeeded before the hang
-              // Look for success indicators in the output
-              const mayHaveSucceeded = stdout.includes('staged') ||
-                stdout.includes('Successfully merged') ||
-                stdout.includes('Changes from');
-
-              if (mayHaveSucceeded) {
-                debug('TIMEOUT: Process hung but merge may have succeeded based on output');
-                const isStageOnly = options?.noCommit === true;
-                resolve({
-                  success: true,
-                  data: {
-                    success: true,
-                    message: 'Changes staged (process timed out but merge appeared successful)',
-                    staged: isStageOnly,
-                    projectPath: isStageOnly ? project.path : undefined
-                  }
-                });
-              } else {
-                resolve({
-                  success: false,
-                  error: 'Merge process timed out. Check git status to see if merge completed.'
-                });
-              }
+              // Always report timeout as failure - the process was killed before completion
+              // User should manually check git status to see actual state
+              debug('TIMEOUT: Merge process killed after', MERGE_TIMEOUT_MS, 'ms');
+              resolve({
+                success: false,
+                error: `Merge process timed out after ${MERGE_TIMEOUT_MS / 1000} seconds. The AI merge may be taking too long. Check git status in your project to see if any changes were staged.`
+              });
             }
           }, MERGE_TIMEOUT_MS);
 
@@ -1515,12 +1498,34 @@ export function registerWorktreeHandlers(
             const chunk = data.toString();
             stdout += chunk;
             debug('STDOUT:', chunk);
+
+            // Stream to renderer for real-time progress display
+            const mainWindow = BrowserWindow.getAllWindows()[0];
+            if (mainWindow) {
+              mainWindow.webContents.send(IPC_CHANNELS.TASK_WORKTREE_MERGE_PROGRESS, {
+                taskId,
+                type: 'stdout',
+                message: chunk,
+                timestamp: Date.now()
+              });
+            }
           });
 
           mergeProcess.stderr.on('data', (data: Buffer) => {
             const chunk = data.toString();
             stderr += chunk;
             debug('STDERR:', chunk);
+
+            // Stream to renderer for real-time progress display
+            const mainWindow = BrowserWindow.getAllWindows()[0];
+            if (mainWindow) {
+              mainWindow.webContents.send(IPC_CHANNELS.TASK_WORKTREE_MERGE_PROGRESS, {
+                taskId,
+                type: 'stderr',
+                message: chunk,
+                timestamp: Date.now()
+              });
+            }
           });
 
           // Handler for when process exits
@@ -1726,12 +1731,35 @@ export function registerWorktreeHandlers(
               // Check if there were conflicts
               const hasConflicts = stdout.includes('conflict') || stderr.includes('conflict');
               debug('Merge failed. hasConflicts:', hasConflicts);
+              debug('stdout:', stdout);
+              debug('stderr:', stderr);
+
+              // Include detailed error info in the message
+              let detailedError = '';
+              if (stderr.includes('ZHIPUAI_API_KEY')) {
+                detailedError = ' (ZHIPUAI_API_KEY not set - AI merge requires API key in .env)';
+              } else if (stderr.includes('AUTHENTICATION FAILED')) {
+                detailedError = ' (Authentication failed - check API key)';
+              } else if (stderr.includes('AI returned empty')) {
+                detailedError = ' (AI returned empty response)';
+              } else if (stderr.includes('SYNTAX VALIDATION FAILED')) {
+                detailedError = ' (AI merge produced invalid syntax)';
+              } else if (stderr.trim() || stdout.trim()) {
+                // Extract last meaningful line from output for user visibility
+                const outputLines = (stderr || stdout).split('\n').filter(l => l.trim());
+                const lastLine = outputLines[outputLines.length - 1] || '';
+                if (lastLine && !lastLine.includes('[DEBUG]')) {
+                  detailedError = ` (${lastLine.slice(0, 100)})`;
+                }
+              }
 
               resolve({
                 success: true,
                 data: {
                   success: false,
-                  message: hasConflicts ? 'Merge conflicts detected' : `Merge failed: ${stderr || stdout}`,
+                  message: hasConflicts
+                    ? `Merge conflicts detected${detailedError}`
+                    : `Merge failed: ${stderr || stdout}`,
                   conflictFiles: hasConflicts ? [] : undefined
                 }
               });

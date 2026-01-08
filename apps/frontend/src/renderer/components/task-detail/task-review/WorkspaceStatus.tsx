@@ -12,13 +12,17 @@ import {
   CheckCircle,
   GitCommit,
   Code,
-  Terminal
+  Terminal,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
 import { cn } from '../../../lib/utils';
 import type { WorktreeStatus, MergeConflict, MergeStats, GitConflictInfo, SupportedIDE, SupportedTerminal } from '../../../../shared/types';
 import { useSettingsStore } from '../../../stores/settings-store';
+import { MergeProgressPanel } from './MergeProgressPanel';
 
 interface WorkspaceStatusProps {
   worktreeStatus: WorktreeStatus;
@@ -28,6 +32,7 @@ interface WorkspaceStatusProps {
   isLoadingPreview: boolean;
   isMerging: boolean;
   isDiscarding: boolean;
+  taskId: string;
   onShowDiffDialog: (show: boolean) => void;
   onShowDiscardDialog: (show: boolean) => void;
   onShowConflictDialog: (show: boolean) => void;
@@ -84,6 +89,7 @@ export function WorkspaceStatus({
   isLoadingPreview,
   isMerging,
   isDiscarding,
+  taskId,
   onShowDiffDialog,
   onShowDiscardDialog,
   onShowConflictDialog,
@@ -97,6 +103,7 @@ export function WorkspaceStatus({
   const { settings } = useSettingsStore();
   const preferredIDE = settings.preferredIDE || 'vscode';
   const preferredTerminal = settings.preferredTerminal || 'system';
+  const [showUnstagedFiles, setShowUnstagedFiles] = useState(false);
 
   const handleOpenInIDE = async () => {
     if (!worktreeStatus.worktreePath) return;
@@ -241,16 +248,37 @@ export function WorkspaceStatus({
 
         {/* Unstaged Changes Warning - only for files NOT yet staged (blockers) */}
         {hasUncommittedChanges && (
-          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-warning/10 border border-warning/20">
-            <AlertTriangle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-warning">
-                {unstagedCount} unstaged {unstagedCount === 1 ? 'change' : 'changes'} in main project
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Commit or stash them in your terminal before staging to avoid conflicts.
-              </p>
-            </div>
+          <div className="rounded-lg bg-warning/10 border border-warning/20 overflow-hidden">
+            <button
+              onClick={() => setShowUnstagedFiles(!showUnstagedFiles)}
+              className="w-full flex items-start gap-2 p-2.5 text-left hover:bg-warning/5 transition-colors"
+            >
+              <AlertTriangle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-warning">
+                  {unstagedCount} unstaged {unstagedCount === 1 ? 'change' : 'changes'} in main project
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Commit or stash them in your terminal before staging to avoid conflicts.
+                </p>
+              </div>
+              {showUnstagedFiles ? (
+                <ChevronUp className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
+              )}
+            </button>
+            {showUnstagedFiles && mergePreview?.uncommittedChanges?.unstagedFiles && (
+              <div className="px-2.5 pb-2.5 pt-0">
+                <div className="bg-background/50 rounded border border-border p-2 max-h-32 overflow-y-auto">
+                  {mergePreview.uncommittedChanges.unstagedFiles.map((file, i) => (
+                    <div key={i} className="text-xs font-mono text-muted-foreground py-0.5 truncate" title={file}>
+                      {file}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -431,6 +459,12 @@ export function WorkspaceStatus({
             <FolderX className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* AI Merge Progress Panel */}
+        <MergeProgressPanel
+          taskId={taskId}
+          isActive={isMerging}
+        />
       </div>
     </div>
   );
